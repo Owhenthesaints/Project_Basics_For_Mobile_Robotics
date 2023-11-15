@@ -1,11 +1,15 @@
-#I asked and anybody can use this file just keep
-#Owhenthesaints/AsyncClinetInterface
-from tdmclient import ClientAsync, aw
+# I asked and anybody can use this file just keep
+# Owhenthesaints/AsyncClinetInterface
+import threading
+import time
 from typing import Callable, Any
+
+from tdmclient import ClientAsync, aw
 
 
 class InvalidArgumentError(Exception):
     pass
+
 
 class AsyncClientInterface:
     """
@@ -25,14 +29,17 @@ class AsyncClientInterface:
     _delta_calib = 1
     _refl_calib = 1
 
-    def __init__(self, delta_calib: float = None, refl_calib: float = None):
+    def __init__(self, delta_calib: float = None, refl_calib: float = None, time_to_turn_const: float = 1.36):
         """
         :param delta_calib: input known calibration for me it is 1.35
         :param refl_calib: input known calibration for me it is also about 1.35
+        :param time_to_turn_const: time in seconds to turn 360°
+        :type time_to_turn_const: float
         """
         self.client = ClientAsync()
         self.node = aw(self.client.wait_for_node())
         aw(self.node.lock())
+        self.__CONVERSION_CONSTANT_TTT = time_to_turn_const
         if refl_calib is not None:
             self._refl_calib = refl_calib
         if delta_calib is not None:
@@ -197,7 +204,8 @@ class AsyncClientInterface:
             except AttributeError:
                 raise InvalidArgumentError("attribute was not found due to wrong input being put in")
 
-    def add_event_listener(self, function: Callable[[Any, Any, Any], None], emit:list[tuple[str,int]], listening_time: int):
+    def add_event_listener(self, function: Callable[[Any, Any, Any], None], emit: list[tuple[str, int]],
+                           listening_time: int):
         """
         adds an event listener that will stop the program execution and wait to listen, and if a function inside the
         thymio emits then there will be a call to the function. The calls stack
@@ -213,6 +221,7 @@ class AsyncClientInterface:
 
         """
         self.client.add_event_received_listener(function)
+
         async def prog():
             error = await self.node.register_events(emit)
             if error is not None:
@@ -221,18 +230,34 @@ class AsyncClientInterface:
                 await self.node.watch(events=True)
             await self.client.sleep(listening_time)
 
-
     def add_listener(self, function: Callable[[..., dict], None], sleep_duration: int = None) -> None:
         """
         :param function: The event listener which should have
         :param sleep_duration: defines the sleep duration
         :return: None
         """
+
         async def prog():
             aw(self.node.watch(variables=True))
             self.node.add_variables_changed_listener(function)
             aw(self.client.sleep())
+
         self.client.run_async_program(prog)
+
+    def turn(self, degrees: float, right: bool, ) -> None:
+        def turn():
+            if right:
+                self.set_motors(left_motor=-50, right_motor=50)
+            else:
+                self.set_motors(left_motor=50, right_motor=-50)
+
+            time.sleep(degrees * self.__CONVERSION_CONSTANT_TTT)
+            self.set_motors(0, 0)
+
+        turn.turn_thread = threading.Thread(target=turn)
+        if turn.turn_thread.isAlive():
+            turn.turn_thread.join()
+        turn.turn_thread.start()
 
     def __del__(self):
         aw(self.node.unlock())
