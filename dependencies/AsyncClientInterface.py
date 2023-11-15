@@ -1,6 +1,5 @@
 # I asked and anybody can use this file just keep
 # Owhenthesaints/AsyncClinetInterface
-import threading
 import time
 from typing import Callable, Any
 
@@ -28,12 +27,12 @@ class AsyncClientInterface:
     __left_motor_value: int = 0
     _delta_calib = 1
     _refl_calib = 1
-
-    def __init__(self, delta_calib: float = None, refl_calib: float = None, time_to_turn_const: float = 1.36):
+    __TURN_RATE_SPEED_CONSTANT=150
+    def __init__(self, delta_calib: float = None, refl_calib: float = None, time_to_turn_const: float = 0.0165):
         """
         :param delta_calib: input known calibration for me it is 1.35
         :param refl_calib: input known calibration for me it is also about 1.35
-        :param time_to_turn_const: time in seconds to turn 360°
+        :param time_to_turn_const: time in seconds to turn 360° with motor speed = 150
         :type time_to_turn_const: float
         """
         self.client = ClientAsync()
@@ -244,20 +243,14 @@ class AsyncClientInterface:
 
         self.client.run_async_program(prog)
 
-    def turn(self, degrees: float, right: bool, ) -> None:
-        def turn():
-            if right:
-                self.set_motors(left_motor=-50, right_motor=50)
-            else:
-                self.set_motors(left_motor=50, right_motor=-50)
+    def turn(self, degrees: float, right: bool = True, turn_rate: int = 150) -> None:
+        if right:
+            self.set_motors(right_motor=-turn_rate, left_motor=turn_rate)
+        else:
+            self.set_motors(right_motor=turn_rate, left_motor=-turn_rate)
 
-            time.sleep(degrees * self.__CONVERSION_CONSTANT_TTT)
-            self.set_motors(0, 0)
-
-        turn.turn_thread = threading.Thread(target=turn)
-        if turn.turn_thread.isAlive():
-            turn.turn_thread.join()
-        turn.turn_thread.start()
+        time.sleep(degrees * self.__CONVERSION_CONSTANT_TTT/turn_rate*self.__TURN_RATE_SPEED_CONSTANT)
+        self.set_motors(0, 0)
 
     def __del__(self):
         aw(self.node.unlock())
