@@ -1,6 +1,5 @@
 # I asked and anybody can use this file just keep
 # Owhenthesaints/AsyncClinetInterface
-import time
 from typing import Callable, Any
 
 from tdmclient import ClientAsync, aw
@@ -27,8 +26,8 @@ class AsyncClientInterface:
     __left_motor_value: int = 0
     _delta_calib = 1
     _refl_calib = 1
-    __TURN_RATE_SPEED_CONSTANT=150
-    def __init__(self, delta_calib: float = None, refl_calib: float = None, time_to_turn_const: float = 0.0165):
+
+    def __init__(self, delta_calib: float = None, refl_calib: float = None):
         """
         :param delta_calib: input known calibration for me it is 1.35
         :param refl_calib: input known calibration for me it is also about 1.35
@@ -38,7 +37,6 @@ class AsyncClientInterface:
         self.client = ClientAsync()
         self.node = aw(self.client.wait_for_node())
         aw(self.node.lock())
-        self.__CONVERSION_CONSTANT_TTT = time_to_turn_const
         if refl_calib is not None:
             self._refl_calib = refl_calib
         if delta_calib is not None:
@@ -242,15 +240,6 @@ class AsyncClientInterface:
             aw(self.client.sleep())
 
         self.client.run_async_program(prog)
-
-    def turn(self, degrees: float, right: bool = True, turn_rate: int = 150) -> None:
-        if right:
-            self.set_motors(right_motor=-turn_rate, left_motor=turn_rate)
-        else:
-            self.set_motors(right_motor=turn_rate, left_motor=-turn_rate)
-
-        time.sleep(degrees * self.__CONVERSION_CONSTANT_TTT/turn_rate*self.__TURN_RATE_SPEED_CONSTANT)
-        self.set_motors(0, 0)
 
     def __del__(self):
         aw(self.node.unlock())
