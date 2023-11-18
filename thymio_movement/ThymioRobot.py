@@ -28,7 +28,7 @@ class ThymioRobot():
         self.interrupt = threading.Event()
         self.__THRESHOLD = threshold
 
-    def initialise_movement_thread(self, goal):
+    def initialise_movement_thread(self):
         self.movement_thread = threading.Thread(target=self.__movement_function)
         self.movement_thread.start()
 
@@ -39,15 +39,15 @@ class ThymioRobot():
         self.interrupt.set()
 
     def __movement_function(self):
-        while True and not self.__stop_thread:
-            movement_vector = self.goal - self.position[0:2]
-            if np.linalg.norm(movement_vector, ord=2)<self.__THRESHOLD:
-                continue
-            x = movement_vector[0]
-            y = movement_vector[1]
-            theta = self.position[2]
-            self.turn((np.arctan2(y, x) - theta) / (2 * np.pi))
-
+        while True:
+            while self.goal is not None and not self.__stop_thread:
+                movement_vector = self.goal - self.position[0:2]
+                if np.linalg.norm(movement_vector, ord=2) < self.__THRESHOLD:
+                    continue
+                x = movement_vector[0]
+                y = movement_vector[1]
+                theta = self.position[2]
+                self.turn((np.arctan2(y, x) - theta) / (2 * np.pi))
 
     def turn(self, normalised_angle: float, right: bool = True, turn_rate: int = 150) -> None:
         if right:
@@ -66,4 +66,3 @@ class ThymioRobot():
     def __del__(self):
         self.__stop_thread = True
         self.movement_thread.join()
-
