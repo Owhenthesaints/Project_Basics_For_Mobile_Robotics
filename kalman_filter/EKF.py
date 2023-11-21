@@ -27,17 +27,15 @@ QRW = SPEED_VAR*4
 class ExtendedKalmanFilter:
     def __init__(self):
 
-        # do this once do we don't keep redoing in update step
         self.__I = np.eye(5)
-
-        self.__x = np.zeros(5)
+        # x = [posx, posy, angle, left_wheel_speed, right_wheel_speed]
+        self.x = np.zeros(5)
         self.__F = np.eye(5)
         self.__f = np.eye(5)
         # store previous time stamp to compute dt
-        self.__timestamp = 0
-        # estimation state
-        # pos_x, pos_y, angle, vel_leftwheel, vel_rightwheel
+        self.timestamp = 0
         self.__H = np.eye(5, dtype=int)
+        # if without camera vision, use only [left_wheel_speed, right_wheel_speed] to propagate
         self.__H_nocamera = np.array([[0, 0, 0, 1, 0],
                                     [0, 0, 0, 0, 1]], dtype=int).T
 
@@ -47,21 +45,21 @@ class ExtendedKalmanFilter:
         self.__Q = np.diag([QPX, QPY, QAN, QLW, QRW])
 
         # initialization of matrix P in EKF
-        # P = var(x(t0))
-        # firstly assumed to be the same as Q
+        # P = var(x(t0)), firstly assumed to be the same as Q
         self.__P = self.__Q
-        #self.P = np.eye(5, dtype=int)
 
 
 
-    def init_state_vector(self, pos, angle, speed):
-        self.__x = np.concatenate((pos, [angle], speed), dtype=np.float64)
+
+    def init_state_vector(self, pos, speed):
+        # pos = [posx, posy, angle]
+        self.x = np.concatenate((pos, speed), dtype=np.float64)
 
     def last_t(self):
-        return self.__timestamp
+        return self.timestamp
 
     def update_t(self, timestamp):
-        self.__timestamp = timestamp
+        self.timestamp = timestamp
    
     def recompute_F(self, dt):
         '''
@@ -69,10 +67,10 @@ class ExtendedKalmanFilter:
         y(k) = h(x(k))       + r, r~N(0, R)
         F = df/dx
         '''
-        angle = self.__x[2]
+        angle = self.x[2]
         dcosA = dt*np.cos(angle)
         dsinA = dt*np.sin(angle)
-        mSpeed = (self.__x[3]+self.__x[4])/2
+        mSpeed = (self.x[3]+self.x[4])/2
 
         # f(x) = x @ self.f
         self.__f = np.array([
@@ -113,17 +111,17 @@ class ExtendedKalmanFilter:
         corr_wspeed = np.array(speed)*CORR_FACTOR
 
         if has_vision:
-            y = np.concatenate((pos_sensor, [angle_sensor], corr_wspeed)) - (self.__x @ self.__H)
+            y = np.concatenate((pos_sensor, [angle_sensor], corr_wspeed)) - (self.x @ self.__H)
             S = (self.__H.T @ self.__P @ self.__H) + self.__R
             K = np.linalg.inv(S) @ self.__H.T @ self.__P
-            self.__x += y @ K
+            self.x += y @ K
             self.__P = self.__P @ (self.__I - self.__H @ K)
             
         else:
-            y = corr_wspeed - (self.__x @ self.__H_nocamera)
+            y = corr_wspeed - (self.x @ self.__H_nocamera)
             # pre compute for the kalman gain K
             S = (self.__H_nocamera.T @ self.__P @ self.__H_nocamera) + self.__R_nocamera
             K = np.linalg.inv(S) @ self.__H_nocamera.T @ self.__P
             # now we update our prediction using the error and kalman gain.
-            self.__x += y @ K
+            self.x += y @ K
             self.__P = self.__P @ (self.__I - self.__H_nocamera @ K)
