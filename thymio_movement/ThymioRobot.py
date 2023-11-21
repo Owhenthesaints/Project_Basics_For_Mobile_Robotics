@@ -1,4 +1,3 @@
-import threading
 import time
 
 import numpy as np
@@ -17,7 +16,8 @@ class ThymioRobot():
     AsyncClient = AsyncClientInterface()
     __TURN_FORWARD_RATE_SPEED_CONSTANT = 150
 
-    def __init__(self, init_position=None, init_angle: float = 0, threshold: float = 10, time_to_turn_const=0.0165,
+    def __init__(self, init_position=None, init_angle: float = 0, KAPPA_ALPHA: float = 1., KAPPA_RHO: float = 1.,
+                 KAPPA_BETA: float = 1.0, threshold: float = 10, time_to_turn_const=0.0165,
                  secs_to_m=0.015):
         self.__CONVERSION_CONSTANT_TTT = time_to_turn_const
         if init_position is None:
@@ -26,6 +26,10 @@ class ThymioRobot():
             self.position = np.concatenate((np.array(init_position), np.array(init_angle)))
         self.__SECS_TO_M = secs_to_m
         self.__THRESHOLD = threshold
+        self.__KAPPA_ALPHA = KAPPA_ALPHA
+        self.__KAPPA_BETA = KAPPA_BETA
+        self.__KAPPA_RHO = KAPPA_RHO
+
 
     def set_new_goal(self, new_goal: list[int, int, int] | np.array):
         self.goal = np.array(new_goal)
@@ -37,7 +41,7 @@ class ThymioRobot():
         beta = - self.goal[2]
         forward_speed = self.__KAPPA_RHO * rho
         turning_velocity = self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta
-        movement_array = [-turning_velocity+forward_speed, turning_velocity+forward_speed]
+        movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         self.AsyncClient.set_motors(left_motor=movement_array[0], right_motor=movement_array[1])
 
     def go_forward(self, m: float, speed: int = 150):
