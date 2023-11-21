@@ -49,5 +49,3 @@ class ThymioRobot():
         self.AsyncClient.set_motors(left_motor=movement_array[0], right_motor=movement_array[1])
         self.on_objective = False
 
-    def __del__(self):
-        self.movement_thread.join()
