@@ -8,7 +8,7 @@ from dependencies.AsyncClientInterface import AsyncClientInterface
 
 class ThymioRobot():
     """
-    :param np.array self._position: describes the initial position
+    :param np.array self.position: describes the initial position and the angle in the clockwise direction
     """
     movement_thread = None
     goal = None
@@ -25,39 +25,20 @@ class ThymioRobot():
         else:
             self.position = np.concatenate((np.array(init_position), np.array(init_angle)))
         self.__SECS_TO_M = secs_to_m
-        self.interrupt = threading.Event()
         self.__THRESHOLD = threshold
 
-    def initialise_movement_thread(self):
-        self.movement_thread = threading.Thread(target=self.__movement_function)
-        self.movement_thread.start()
-
-    def set_new_goal(self, new_goal: list):
-        if not self.movement_thread.isAlive():
-            self.initialise_movement_thread()
+    def set_new_goal(self, new_goal: list[int, int, int] | np.array):
         self.goal = np.array(new_goal)
-        self.interrupt.set()
 
-    def __movement_function(self):
-        while True:
-            while self.goal is not None and not self.__stop_thread:
-                movement_vector = self.goal - self.position[0:2]
-                if np.linalg.norm(movement_vector, ord=2) < self.__THRESHOLD:
-                    continue
-                x = movement_vector[0]
-                y = movement_vector[1]
-                theta = self.position[2]
-                self.turn((np.arctan2(y, x) - theta) / (2 * np.pi))
-
-    def turn(self, normalised_angle: float, right: bool = True, turn_rate: int = 150) -> None:
-        if right:
-            self.AsyncClient.set_motors(right_motor=-turn_rate, left_motor=turn_rate)
-        else:
-            self.AsyncClient.set_motors(right_motor=turn_rate, left_motor=-turn_rate)
-
-        time.sleep(
-            normalised_angle * self.__CONVERSION_CONSTANT_TTT / turn_rate * self.__TURN_FORWARD_RATE_SPEED_CONSTANT)
-        self.AsyncClient.set_motors(0, 0)
+    def apply_motor_command(self):
+        movement_vector = self.position - self.goal
+        rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
+        alpha = -self.position[2] - self.goal[2]
+        beta = - self.goal[2]
+        forward_speed = self.__KAPPA_RHO * rho
+        turning_velocity = self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta
+        movement_array = [-turning_velocity+forward_speed, turning_velocity+forward_speed]
+        self.AsyncClient.set_motors(left_motor=movement_array[0], right_motor=movement_array[1])
 
     def go_forward(self, m: float, speed: int = 150):
         self.AsyncClient.set_motors(150, 150)
