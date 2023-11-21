@@ -89,10 +89,10 @@ class ExtendedKalmanFilter:
                         [      dcosA/2,      dsinA/2, -dt/l, 0, 1]])
 
     def current_estimate(self):
-            return self.__x
+            return self.x
 
     def predict(self):
-        self.__x = self.__x @ self.__f
+        self.x = self.x @ self.__f
         self.__P = (self.__F.T @ self.__P @ self.__F) + self.__Q
 
     def update(self, has_vision, pos_sensor, angle_sensor, speed):
