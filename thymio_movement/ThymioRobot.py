@@ -15,6 +15,7 @@ class ThymioRobot():
 
     AsyncClient = AsyncClientInterface()
     __TURN_FORWARD_RATE_SPEED_CONSTANT = 150
+    on_objective: bool = False
 
     def __init__(self, init_position=None, init_angle: float = 0, KAPPA_ALPHA: float = 1., KAPPA_RHO: float = 1.,
                  KAPPA_BETA: float = 1.0, threshold: float = 10, time_to_turn_const=0.0165,
@@ -37,17 +38,16 @@ class ThymioRobot():
     def apply_motor_command(self):
         movement_vector = self.position - self.goal
         rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
+        if rho < self.__THRESHOLD:
+            self.on_objective = True
+            return
         alpha = -self.position[2] - self.goal[2]
         beta = - self.goal[2]
         forward_speed = self.__KAPPA_RHO * rho
         turning_velocity = self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         self.AsyncClient.set_motors(left_motor=movement_array[0], right_motor=movement_array[1])
-
-    def go_forward(self, m: float, speed: int = 150):
-        self.AsyncClient.set_motors(150, 150)
-        time.sleep(m * self.__SECS_TO_M / speed * self.__TURN_FORWARD_RATE_SPEED_CONSTANT)
+        self.on_objective = False
 
     def __del__(self):
-        self.__stop_thread = True
         self.movement_thread.join()
