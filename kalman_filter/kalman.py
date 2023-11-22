@@ -16,15 +16,17 @@ def convert_angle(angle):
         angle -= 2*np.pi
     return angle
 
-def kalman_filter(kalman = ExtendedKalmanFilter, pos_sensor = None, angle_sensor = None, speed = None):
+def kalman_filter(kalman = ExtendedKalmanFilter, pos_measure = None, speed = None):
 
-    has_vision = (pos_sensor is not None and angle_sensor is not None)
+    has_vision = (pos_measure is not None )
     t = time.time()
     dt = t - kalman.last_t()
     kalman.update_t(t)
     kalman.recompute_F(dt)
     kalman.predict()
     kidnapping = False
+    pos_sensor = pos_measure[0:2]
+    angle_sensor = pos_measure[2]
 
     if(has_vision):
         kalman_est_pos = kalman.current_estimate()
@@ -34,8 +36,8 @@ def kalman_filter(kalman = ExtendedKalmanFilter, pos_sensor = None, angle_sensor
 
         if dist > DIST_TRESHOLD or angle_diff_abs > ANGLE_TRESHOLD:
             print("Detecting kidnapping")
-            kalman.update_timestamp(time.time())
-            kalman.init_state_vector(pos_sensor, angle_sensor, speed)
+            kalman.update_t(time.time())
+            kalman.init_state_vector(pos_measure, speed)
             kidnapping = True
 
         else:
@@ -44,7 +46,6 @@ def kalman_filter(kalman = ExtendedKalmanFilter, pos_sensor = None, angle_sensor
         kalman.update(has_vision, pos_sensor, angle_sensor, speed)
 
     kalman_est_update= kalman.current_estimate() # based on what the kalman has updated
-    pos_est_new = kalman_est_update[0:2]
-    angle_est_new = kalman_est_update[2]
 
-    return pos_est_new, angle_est_new, kidnapping
+
+    return kalman_est_update, kidnapping
