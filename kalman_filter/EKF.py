@@ -1,28 +1,6 @@
 import numpy as np
+import dependencies.constants_robot as cst
 
-l = 90 # in mm, dist between wheel centers
-
-# speed variance obtanied 12.31 mm^2/s^2
-SPEED_VAR = 12.31
-# need tuning in practice
-POS_VAR = 2**2
-ANGLE_VAR = (np.pi/10)**2
-CORR_FACTOR = 2
-
-
-RPX = POS_VAR
-RPY = POS_VAR
-RAN = ANGLE_VAR
-RLW = SPEED_VAR
-RRW = SPEED_VAR
-
-
-# assume less certain about the model used
-QPX = POS_VAR*4
-QPY = POS_VAR*4
-QAN = ANGLE_VAR*4
-QLW = SPEED_VAR*4
-QRW = SPEED_VAR*4
 
 class ExtendedKalmanFilter:
     def __init__(self):
@@ -40,9 +18,9 @@ class ExtendedKalmanFilter:
                                     [0, 0, 0, 0, 1]], dtype=int).T
 
         # noise matrices
-        self.__R = np.diag([RPX, RPY, RAN, RLW, RRW])
-        self.__R_nocamera = np.diag([RLW, RRW])
-        self.__Q = np.diag([QPX, QPY, QAN, QLW, QRW])
+        self.__R = np.diag([cst.RPX, cst.RPY, cst.RAN, cst.RLW, cst.RRW])
+        self.__R_nocamera = np.diag([cst.RLW, cst.RRW])
+        self.__Q = np.diag([cst.QPX, cst.QPY, cst.QAN, cst.QLW, cst.QRW])
 
         # initialization of matrix P in EKF
         # P = var(x(t0)), firstly assumed to be the same as Q
@@ -77,16 +55,16 @@ class ExtendedKalmanFilter:
                         [      1,       0,     0, 0, 0],
                         [      0,       1,     0, 0, 0],
                         [      0,       0,     1, 0, 0],
-                        [dcosA/2, dsinA/2,  dt/l, 1, 0],
-                        [dcosA/2, dsinA/2, -dt/l, 0, 1]])
+                        [dcosA/2, dsinA/2,  dt/cst.L, 1, 0],
+                        [dcosA/2, dsinA/2, -dt/cst.L, 0, 1]])
         
         # Transspose of jacobian matrix of f
         self.__F = np.array([
                         [            1,            0,     0, 0, 0],
                         [            0,            1,     0, 0, 0],
                         [-mSpeed*dsinA, mSpeed*dcosA,     1, 0, 0],
-                        [      dcosA/2,      dsinA/2,  dt/l, 1, 0],
-                        [      dcosA/2,      dsinA/2, -dt/l, 0, 1]])
+                        [      dcosA/2,      dsinA/2,  dt/cst.L, 1, 0],
+                        [      dcosA/2,      dsinA/2, -dt/cst.L, 0, 1]])
 
     def current_estimate(self):
             return self.x
@@ -108,7 +86,7 @@ class ExtendedKalmanFilter:
         P = (xI - KH)P
         '''
 
-        corr_wspeed = np.array(speed)*CORR_FACTOR
+        corr_wspeed = np.array(speed)*cst.CORR_FACTOR
 
         if has_vision:
             y = np.concatenate((pos_sensor, [angle_sensor], corr_wspeed)) - (self.x @ self.__H)
