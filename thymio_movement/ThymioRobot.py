@@ -39,12 +39,18 @@ class ThymioRobot():
     def stop(self):
         self.AsyncClient.set_motors(left_motor=0, right_motor=0)
 
-    def get_sensors(self, sensor: str = "horizontal_sensor"):
+    def get_sensors(self, sensor: str = "horizontal_sensor") -> list | np.ndarray | int:
+        """
+        :param str sensor: either "horizontal_sensor" one gets classical horizontal sensors or "wheels" one gets left
+        then right wheel speed "wheels_target" the value stored in aseba.
+        :rtype np.ndarray:
+        :return: left then right wheel or horizontal array of sensors
+        """
         if sensor == "horizontal_sensor":
-            return self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES)
+            return np.array(self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES))
         elif sensor == "wheels":
             return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
-                    self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
+                             self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
 
     def apply_motor_command(self):
         movement_vector = self._position - self.goal

@@ -1,7 +1,7 @@
 # I asked and anybody can use this file just keep
 # Owhenthesaints/AsyncClinetInterface
 from typing import Callable, Any
-
+import dependencies.constants_robot as cst
 from tdmclient import ClientAsync, aw
 
 
@@ -29,7 +29,7 @@ class AsyncClientInterface:
     _delta_calib = 1
     _refl_calib = 1
 
-    def __init__(self, delta_calib: float = None, refl_calib: float = None):
+    def __init__(self, delta_calib: float = cst.DELTA_ROBOT, refl_calib: float = cst.REFL_ROBOT):
         """
         :param delta_calib: input known calibration for me it is 1.35
         :param refl_calib: input known calibration for me it is also about 1.35
@@ -39,13 +39,9 @@ class AsyncClientInterface:
         self.client = ClientAsync()
         self.node = aw(self.client.wait_for_node())
         aw(self.node.lock())
-        if refl_calib is not None:
-            self._refl_calib = refl_calib
-        if delta_calib is not None:
-            self._delta_calib = delta_calib
-        if delta_calib is None and refl_calib is None:
-            self.calibrate_sensor_prox_ref(True, True)
-            self.calibrate_sensor_prox_ref(False, True)
+        self._refl_calib = refl_calib
+        self._delta_calib = delta_calib
+
 
     def sleep(self, seconds):
         aw(self.client.sleep(seconds))
