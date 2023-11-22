@@ -43,8 +43,8 @@ class ThymioRobot():
         if sensor == "horizontal_sensor":
             return self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES)
         elif sensor == "wheels":
-            return [self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
-                    self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)]
+            return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
+                    self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
 
     def apply_motor_command(self):
         movement_vector = self._position - self.goal
