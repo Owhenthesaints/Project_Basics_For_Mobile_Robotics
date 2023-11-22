@@ -15,6 +15,8 @@ class AsyncClientInterface:
     """
     LEFT_MOTOR = "motor.left.target"
     RIGHT_MOTOR = "motor.right.target"
+    RIGHT_SPEED = "motor.right.speed"
+    LEFT_SPEED = "motor.left.speed"
     PROX_HORIZONTAL_VALUES = "prox.horizontal"
     LEDS_BOTTOM_LEFT = "leds.bottom.left"
     LEDS_BOTTOM_RIGHT = "leds.bottom.right"
@@ -61,7 +63,7 @@ class AsyncClientInterface:
         :param args: left_motor then right_motor
         :type args: int
         :param kwargs: can put in right_motor or left_motor value in directly or put in array with length 2
-        :type kwargs: int or list[int]
+        :type kwargs: int or list[int, int]
 
         :return: None
         """
@@ -196,8 +198,12 @@ class AsyncClientInterface:
             node_with_attr = getattr(self.node, "v")
             for attribute in attributes:
                 node_with_attr = getattr(node_with_attr, attribute)
+
             try:
-                return list(node_with_attr)
+                if not type(node_with_attr) == int:
+                    return list(node_with_attr)
+                else:
+                    return node_with_attr
             except AttributeError:
                 raise InvalidArgumentError("attribute was not found due to wrong input being put in")
 
