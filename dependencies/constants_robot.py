@@ -62,9 +62,3 @@ DELTA_ROBOT = 1.35
 REFL_ROBOT = 1.35
 L = 90                           # in mm, dist between wheel centers
 
-# limit the angle to (-pi, pi) 
-def convert_angle(angle):
-    angle = angle % (2*np.pi)
-    if angle >= np.pi:
-        angle -= 2*np.pi
-    return angle

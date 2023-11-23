@@ -16,7 +16,6 @@ def main():
         # detect position of thymio visually
         # apply kallman
         # set the new position as argument of set_new_position
-        # set the goal
         little_thymio.set_new_position()
         if little_thymio.on_objective:
             # then give it the next node/objective
