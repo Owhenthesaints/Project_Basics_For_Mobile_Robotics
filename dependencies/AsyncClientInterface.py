@@ -1,5 +1,3 @@
-# I asked and anybody can use this file just keep
-# Owhenthesaints/AsyncClinetInterface
 from typing import Callable, Any
 import dependencies.constants_robot as cst
 from tdmclient import ClientAsync, aw
