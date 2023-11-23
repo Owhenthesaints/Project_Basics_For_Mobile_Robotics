@@ -38,14 +38,7 @@ DIST_TRESHOLD = 100
 ANGLE_TRESHOLD = np.pi/4
 
 ####################################  local navigation  ##########
-#Threshold to switch states
-OBSTTHRH = 2000
-OBSTTHRL = 1000
 
-# obstacle avoidance: ANN weights
-w = np.array(
-[[50, 30, -20, -30, -50, 30, -10, 8, 0],
-[-50, -30, -20, 30, 50, -10, 30, 0, 8]]) 
 
 # Scale factors that divide sensor inputs and memory inputs
 SENSOR_SCALE = 800
