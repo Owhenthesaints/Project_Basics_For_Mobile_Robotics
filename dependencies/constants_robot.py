@@ -8,6 +8,8 @@ DEFAULT_KAPPA_BETA = 250
 DEFAULT_KAPPA_RHO = 5
 DEFAULT_THRESHOLD = 1
 LOCAL_NAV_SWITCH = 1000
+LOCAL_NAV_FORWARD_SPEED = 70
+LOCAL_NAV_FACTOR = 0.01
 
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.31 mm^2/s^2

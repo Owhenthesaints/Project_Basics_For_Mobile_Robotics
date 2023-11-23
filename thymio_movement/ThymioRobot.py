@@ -39,10 +39,17 @@ class ThymioRobot():
 
     def kill(self):
         self.is_alive = False
-        self.AsyncClient.set_motors(0,0)
+        self.AsyncClient.set_motors(0, 0)
 
     def stop(self):
         self.AsyncClient.set_motors(left_motor=0, right_motor=0)
+
+    def local_nav(self):
+        while np.any(self.get_sensors() > constants_robot.LOCAL_NAV_SWITCH):
+            # first row left motor second right
+            W = np.array([[1, 1, 1, -1, -1], [-1, -1, -1, 1, 1]]) * constants_robot.LOCAL_NAV_FACTOR
+            lr_motor = W @ self.get_sensors().T + constants_robot.LOCAL_NAV_FORWARD_SPEED
+            self.AsyncClient.set_motors(left_motor=int(lr_motor[0]), right_motor=int(lr_motor[1]))
 
     def get_sensors(self, sensor: str = "horizontal_sensor") -> list | np.ndarray | int:
         """
