@@ -13,6 +13,7 @@ class ThymioRobot():
     __WHEEL_DISTANCE = 0.09  # in m
     AsyncClient = AsyncClientInterface()
     on_objective: bool = False
+    is_alive = True
 
     def __init__(self, init_position=None,
                  kappa_alpha: float = constants_robot.DEFAULT_KAPPA_ALPHA,
@@ -36,6 +37,10 @@ class ThymioRobot():
     def set_new_position(self, position: np.array):
         self._position = position
 
+    def kill(self):
+        self.is_alive = False
+        self.AsyncClient.set_motors(0,0)
+
     def stop(self):
         self.AsyncClient.set_motors(left_motor=0, right_motor=0)
 
@@ -47,7 +52,7 @@ class ThymioRobot():
         :return: left then right wheel or horizontal array of sensors
         """
         if sensor == "horizontal_sensor":
-            return np.array(self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES))
+            return np.array(self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES))[0:5]
         elif sensor == "wheels":
             return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
                              self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
