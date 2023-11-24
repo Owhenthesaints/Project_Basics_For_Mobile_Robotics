@@ -4,7 +4,12 @@ import cv2
 
 from EKF import ExtendedKalmanFilter
 import dependencies.constants_robot as cst
-
+# limit the angle to (-pi, pi) 
+def convert_angle(angle):
+    angle = angle % (2*np.pi)
+    if angle >= np.pi:
+        angle -= 2*np.pi
+    return angle
 
 
 
@@ -23,7 +28,7 @@ def kalman_filter(kalman = ExtendedKalmanFilter, pos_measure = None, speed = Non
     if(has_vision):
         kalman_est_pos = kalman.current_estimate()
         pos_est_old, angle_est_old = kalman_est_pos[0:2], kalman_est_pos[2]
-        angle_diff_abs = abs(cst.convert_angle(angle_est_old - angle_sensor))
+        angle_diff_abs = abs(convert_angle(angle_est_old - angle_sensor))
         dist = np.sqrt(np.sum(np.square(pos_est_old - pos_sensor)))
 
         if dist > cst.DIST_TRESHOLD or angle_diff_abs > cst.ANGLE_TRESHOLD:
