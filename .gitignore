@@ -248,3 +248,13 @@ fabric.properties
 
 # Built Visual Studio Code Extensions
 *.vsix
+dependencies/rectang.jpg
+dependencies/rectang.png
+dependencies/Shapes.jpg
+dependencies/Shapes.png
+dependencies/SingTriang.jpg
+dependencies/SingTriang.png
+dependencies/Tracking_QR_code_obstacles_analysis.ipynb
+dependencies/Triangle.jpg
+dependencies/Triangle.png
+dependencies/visibility2.png
