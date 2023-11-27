@@ -8,7 +8,6 @@ import numpy as np
 import pyvisgraph as vg
 from shapely.geometry import LineString
 
-
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
     kernel = np.ones((5, 5), np.uint8)
@@ -223,6 +222,8 @@ def detectShape(cnt):  # Function to determine type of polygon on basis of numbe
     # print('sides', sides)
     if (sides == 3):
         shape = 'triangle'
+    elif (sides == 5):
+        shape = 'pentagon'
     elif (sides == 8):
         shape = 'octagon'
     else:
@@ -239,7 +240,7 @@ def scale_contour(original_contour, desired_min_distance):
     center = ((x + w // 2), (y + h // 2))
 
     scaled_adequate = False
-    scale_factor = 1.3;
+    scale_factor = 1.3
 
     while (not scaled_adequate):
         # Scale each point of the contour relative to the center
@@ -544,6 +545,62 @@ def draw_path_on_camera(cameraImage, shortestPath, triangle_vertices, robot_cent
     cv2.arrowedLine(cameraImage, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0),
                     2)
 
+############################################## 
+## FUNCTIONS FOR GLOBAL RUNNING OF VISION AND PATH PLANNING
+def calibrateHSV():
+    init_camera(CAMERA_ID)
+    image_detected, image = video_stream.read()
+        if image_detected:
+            find_thresh(image)
+    
+# function initializes the webcam            
+def init_camera(camera_id):
+    video_stream = cv2.VideoCapture(camera_id)
+    time.sleep(1)
+    QR_detector = cv2.QRCodeDetector()
+    if not video_stream.isOpened():
+        raise IOError("Cannot open webcam")
+    return video_stream
+    
+def kill_camera(video_stream):
+    video_stream.release()
+    cv2.destroyAllWindows()
+    
+def init_background(video_stream):
+    successInit = False  
+    transformation_matrix_found = False
+    transformation_matrix = None
+    background_found = False
+    num_obstacles = 0
+    
+    while not successInit:
+        image_detected, image = video_stream.read()
+        if image_detected:
+            image_initial = image.copy()
+            height, width, channels = image.shape
+            # Apply the new percpective on the frame
+            if not transformation_matrix_found:
+                transformation_matrix = perspective_transformation(image)
+                transformation_matrix_found = True
+            if transformation_matrix_found:
+                new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
+            else:
+                new_perspective_image = image
+            if not background_found or num_obstacles != 2:
+                #             plt.imshow(new_perspective_image)
+                #             plt.title("new perspective")
+                #             plt.show()
+                obstacle_vertices, obstacle_edges, goal_center = process_background(new_perspective_image)
+                num_obstacles = len(obstacle_vertices)
+                print('vertices', obstacle_vertices)
+                print('edges', triangle_edges)
+                print('goal', goal_center)
+                successInit = (num_obstacles == 2 and goal_center is not None) 
+                print('background found', background_found)
+    
+    return obstacle_vertices, goal_center
+
+
 
 def main_vision():
     window_name = 'Tracking QR Code'
@@ -584,7 +641,7 @@ def main_vision():
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
                 new_perspective_image = image
-            if not background_found or num_obstacles != 2:
+            if not background_found:
                 #             plt.imshow(new_perspective_image)
                 #             plt.title("new perspective")
                 #             plt.show()
@@ -593,7 +650,6 @@ def main_vision():
                 print('vertices', triangle_vertices)
                 print('edges', triangle_edges)
                 print('goal', goal_center)
-                background_found = True
                 print('background found', background_found)
                 continue
 
@@ -647,3 +703,4 @@ def main_vision():
 
     video_stream.release()
     cv2.destroyAllWindows()
+
