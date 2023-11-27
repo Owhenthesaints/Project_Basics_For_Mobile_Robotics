@@ -1,9 +1,10 @@
 import numpy as np
 import dependencies.constants_robot as cst
+import time
 
 
 class ExtendedKalmanFilter:
-    def __init__(self):
+    def __init__(self, position):
 
         self.__I = np.eye(5)
         # x = [posx, posy, angle, left_wheel_speed, right_wheel_speed]
@@ -25,6 +26,8 @@ class ExtendedKalmanFilter:
         # initialization of matrix P in EKF
         # P = var(x(t0)), firstly assumed to be the same as Q
         self.__P = self.__Q
+        self.update_t(time.time())
+        self.init_state_vector(position, np.array([0, 0]))
 
 
 

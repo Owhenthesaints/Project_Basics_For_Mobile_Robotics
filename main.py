@@ -9,7 +9,6 @@ from global_navigation_function import *
 
 DO_KALMAN = True
 LOCAL_AVOIDANCE = True
-NEED_INIT = True
 VISION = True
 
 goal_position = [1000, 1000, np.pi/2]
@@ -19,15 +18,13 @@ position = [0, 0, np.pi/2]
 if __name__=="__main__":
     #initialize vision
     if VISION:
-        
+        ...
                 
     
-    KF = ExtendedKalmanFilter()
+    
     if DO_KALMAN:
         if position is None:
-            KF.update_t(time.time())
-            KF.init_state_vector(position, np.array([0, 0]))
-            NEED_INIT = False
+            KF = ExtendedKalmanFilter(position)
         else:
             print("Thymio has not been found")
 
