@@ -10,6 +10,7 @@ DEFAULT_THRESHOLD = 1
 LOCAL_NAV_SWITCH = 1000
 LOCAL_NAV_FORWARD_SPEED = 70
 LOCAL_NAV_FACTOR = 0.01
+MAX_GRID = [480, 640]
 
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.31 mm^2/s^2

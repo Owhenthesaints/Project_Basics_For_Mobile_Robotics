@@ -2,7 +2,7 @@ import numpy as np
 import time
 import cv2
 
-from EKF import ExtendedKalmanFilter
+from kalman_filter.EKF import ExtendedKalmanFilter
 import dependencies.constants_robot as cst
 # limit the angle to (-pi, pi) 
 def convert_angle(angle):
@@ -13,7 +13,7 @@ def convert_angle(angle):
 
 
 
-def kalman_filter(kalman = ExtendedKalmanFilter, pos_measure = None, speed = None):
+def kalman_filter(kalman: ExtendedKalmanFilter() = ExtendedKalmanFilter, pos_measure = None, speed = None):
 
     has_vision = (pos_measure is not None )
     t = time.time()
