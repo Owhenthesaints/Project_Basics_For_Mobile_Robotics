@@ -57,6 +57,7 @@ class ExtendedKalmanFilter:
                         [      0,       0,     1, 0, 0],
                         [dcosA/2, dsinA/2,  dt/cst.L, 1, 0],
                         [dcosA/2, dsinA/2, -dt/cst.L, 0, 1]])
+        # may have to change the sign of both dt/cst.L
         
         # Transspose of jacobian matrix of f
         self.__F = np.array([
@@ -73,7 +74,7 @@ class ExtendedKalmanFilter:
         self.x = self.x @ self.__f
         self.__P = (self.__F.T @ self.__P @ self.__F) + self.__Q
 
-    def update(self, has_vision, pos_sensor, angle_sensor, speed):
+    def update(self, has_vision, pos_measure, speed):
         '''
         x(k) = f(x(k-1), u(t)) + q, q~N(0, Q)
         y(k) = h(x(k))       + r, r~N(0, R)
@@ -89,7 +90,7 @@ class ExtendedKalmanFilter:
         corr_wspeed = np.array(speed)*cst.CORR_FACTOR
 
         if has_vision:
-            y = np.concatenate((pos_sensor, [angle_sensor], corr_wspeed)) - (self.x @ self.__H)
+            y = np.concatenate((pos_measure, corr_wspeed)) - (self.x @ self.__H)
             S = (self.__H.T @ self.__P @ self.__H) + self.__R
             K = np.linalg.inv(S) @ self.__H.T @ self.__P
             self.x += y @ K
