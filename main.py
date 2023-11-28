@@ -5,7 +5,7 @@ from dependencies.helper_functions import NoThymioError
 from kalman_filter.EKF import ExtendedKalmanFilter
 from kalman_filter.kalman import kalman_filter
 from thymio_movement.ThymioRobot import ThymioRobot
-from global_navigation.GlobalNav2 import *
+from global_navigation.GlobalNav2 import GlobalNav2
 
 DO_KALMAN = True
 LOCAL_AVOIDANCE = True
@@ -13,15 +13,9 @@ VISION = True
 
 if __name__ == "__main__":
     # CAMERA INITIALISATION
-    CAMERA_ID = 1
-    video_stream, QR_detector = init_camera_QRdetector(1)
-    obstacle_vertices, goal_center, transformation_matrix = init_background(video_stream)
-    recalculate_global = True
-    last_robot_center = None
-    windowName = "Tracking"
+    global_navigation = GlobalNav2()
 
-    # initialize vision
-    position = [0, 0, np.pi / 2]
+
 
     if DO_KALMAN:
         if position is None:
