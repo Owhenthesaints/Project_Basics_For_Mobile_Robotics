@@ -13,12 +13,13 @@ def convert_angle(angle):
 
 
 
-def kalman_filter(kalman: ExtendedKalmanFilter() = ExtendedKalmanFilter, pos_measure = None, speed = None):
+def kalman_filter(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = ExtendedKalmanFilter, pos_measure = None, speed = None, dt = None):
 
     has_vision = (pos_measure is not None )
-    t = time.time()
-    dt = t - kalman.last_t()
-    kalman.update_t(t)
+    if dt is None:
+        t = time.time()
+        dt = t - kalman.last_t()
+        kalman.update_t(t)
     kalman.recompute_F(dt)
     kalman.predict()
     kidnapping = False
