@@ -77,8 +77,8 @@ def perspective_transformation(image):
     centers = []
 
     # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (44, 52, 73)
-    (max_blue, max_green, max_red) = (103, 255, 146)
+    (min_blue, min_green, min_red) = (23, 0, 0)
+    (max_blue, max_green, max_red) = (62, 255, 121)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
