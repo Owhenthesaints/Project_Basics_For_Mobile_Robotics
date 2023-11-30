@@ -77,8 +77,8 @@ def perspective_transformation(image):
     centers = []
 
     # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (18, 0, 93)
-    (max_blue, max_green, max_red) = (46, 255, 141)
+    (min_blue, min_green, min_red) = (0, 249, 85)
+    (max_blue, max_green, max_red) = (50, 255, 153)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
@@ -208,7 +208,7 @@ def detectShape(cnt):  # Function to determine type of polygon on basis of numbe
     return shape
 
 
-# INPUTS: a contour, and minimum distance need to scale the contour
+# INPUTS: a contour, and minimum distance in pixels needed to scale the contour
 def scale_contour(original_contour, desired_min_distance):
     # Get the bounding rectangle around the shape
     x, y, w, h = cv2.boundingRect(original_contour)
@@ -300,12 +300,12 @@ def process_background(image):
     # Scale_factor
 
     # Defining the the RGB threshold values for the obstacles
-    (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 39)
-    (max_blue_obst, max_green_obst, max_red_obst) = (238, 255, 87)
+    (min_blue_obst, min_green_obst, min_red_obst) = (0, 150, 0)
+    (max_blue_obst, max_green_obst, max_red_obst) = (255, 255, 74)
 
     # Defining the the RGB threshold values for the goal destination
-    (min_blue_goal, min_green_goal, min_red_goal) = (0, 0, 49)
-    (max_blue_goal, max_green_goal, max_red_goal) = (238, 213, 159)
+    (min_blue_goal, min_green_goal, min_red_goal) = (0, 38, 0)
+    (max_blue_goal, max_green_goal, max_red_goal) = (109, 97, 85)
 
     # Processing the obstacles to find the vertices and edges
     processed_obstacles = process_image(image, min_blue_obst, min_green_obst, min_red_obst, max_blue_obst,
@@ -453,7 +453,7 @@ def calibrateHSV(video_stream, CAMERA_ID=1):
 def init_camera_QRdetector(camera_id):
     video_stream = cv2.VideoCapture(camera_id)
     time.sleep(2)
-    QR_detector = cv2.QRCodeDetectorAruco()
+    QR_detector = cv2.QRCodeDetector()
     if not video_stream.isOpened():
         raise IOError("Cannot open webcam")
     return video_stream, QR_detector
@@ -477,7 +477,7 @@ def init_background(video_stream):
             image_initial = image.copy()
             height, width, channels = image.shape
             # this might be needed because the transformation matrix isnt always that good
-            #transformation_matrix = perspective_transformation(image)
+            transformation_matrix = perspective_transformation(image)
             # Apply the new percpective on the frame
             if not transformation_matrix_found:
                 transformation_matrix = perspective_transformation(image)
@@ -509,15 +509,15 @@ def init_background(video_stream):
     return obstacle_vertices, goal_center, transformation_matrix
 
 
-def get_robot_pos_angle(image, QR_detector, transformation_matrix):
+def get_robot_pos_angle(image, QR_detector):
     robot_angle = None
     robot_center = None
     qr_vertices = None
     window_size = 5
     QR_detected, qr_vertices, _ = QR_detector.detectAndDecode(image)
     if QR_detected:
-        #         qr_vertices = cv2.perspectiveTransform(qr_vertices.reshape(-1, 1, 2), transformation_matrix)
-        #         qr_vertices = qr_vertices.reshape(1, 4, 2)
+        # qr_vertices = cv2.perspectiveTransform(qr_vertices.reshape(-1, 1, 2), transformation_matrix)
+        # qr_vertices = qr_vertices.reshape(1, 4, 2)
 
         robot_angle, robot_center = orientation_angle(qr_vertices)
         print('robot center', robot_center)
@@ -561,12 +561,17 @@ class GlobalNav2:
         robot_center = None
         while robot_center is None:
             if self.__get_most_recent_image():
+                print("stuck finding robot center")
                 height, width, channels = self.__image.shape
                 self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
                                                                 (width, height))
                 self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                        self.QR_detector,
-                                                                                        self.__transformation_matrix)
+                                                                                        self.QR_detector)
+                # plt.imshow(self.__new_perspective_image)
+                # plt.title("transformed")
+                # plt.axis('off')  # Turn off axis labels
+                # plt.show()
+                
                 if robot_center is None:
                     continue
                 else:
