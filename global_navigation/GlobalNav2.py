@@ -436,10 +436,9 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
 
     # draw a directional arrow of robot orientation
     length = 50
-    endpoint_x = int(robot_center[0] + length * np.cos(np.radians(robot_angle)))
-    endpoint_y = int(robot_center[1] - length * np.sin(np.radians(robot_angle)))
-    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0),
-                    2)
+    endpoint_x = int(robot_center[0] + length * np.cos((robot_angle)))
+    endpoint_y = int(robot_center[1] + length * np.sin((robot_angle)))
+    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0), 2)
 
 
 def calibrateHSV(video_stream, CAMERA_ID=1):
@@ -508,7 +507,6 @@ def init_background(video_stream):
 
     return obstacle_vertices, goal_center, transformation_matrix
 
-
 def get_robot_pos_angle(image, QR_detector):
     robot_angle = None
     robot_center = None
@@ -530,6 +528,29 @@ def get_robot_pos_angle(image, QR_detector):
             angle_window = []  # Reset the window for the next set of frames
     return robot_angle, robot_center, qr_vertices
 
+## REFACTOR THIS CODE
+def find_pos_angle(p):
+    """
+    Compute the medians of the triangle defined by p[0], p[1], p[2](lists of 2 elements)
+    taking CV2 convention into account
+    """
+
+    #middle of traingle segment
+    m = np.array([
+    [(p[1][0] + p[2][0]) / 2, (p[1][1] + p[2][1]) / 2],
+    [(p[2][0] + p[0][0]) / 2, (p[2][1] + p[0][1]) / 2],
+    [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2]])
+    
+    
+    # length of medianes on x and y
+    d = p - m
+
+    # abs lenght of medianes
+    l = d[:,0]**2 + d[:,1]**2
+
+    i = np.argmax(l)
+    angle = np.arctan2(d[i][1], d[i][0])
+    return m[i], angle
 
 class GlobalNav2:
     __image = None
@@ -556,6 +577,44 @@ class GlobalNav2:
             self.__get_warped_perspective_image()
         return detected
     
+    def find_thymio(self):
+        print("finding thymio")
+        # filter out red color to get triangle
+        # Convert the frame from BGR to HSV
+        hsv = cv2.cvtColor(self.__new_perspective_image, cv2.COLOR_BGR2HSV)
+
+        # Define the range for red color in HSV
+        lower_red = np.array([0, 100, 100])
+        upper_red = np.array([10, 255, 255])
+
+        # Create a mask for the red color
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+        
+        # mask
+        # plt.imshow(mask)
+        # plt.title("transformed")
+        # plt.axis('off')  # Turn off axis labels
+        # plt.show()
+
+        # Find contours in the mask
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Filter out triangles based on the number of vertices
+        for contour in contours:
+            approx = cv2.approxPolyDP(contour, 0.04 * cv2.arcLength(contour, True), True)
+            if len(approx) == 3:
+                cnt = np.squeeze(approx)
+                print(cnt)
+                position, angle =  find_pos_angle(cnt)
+                self._position = np.array([position[0], position[1], angle])
+                # # Draw a bounding box around the detected triangle
+                # x, y, w, h = cv2.boundingRect(contour)
+                # cv2.drawContours(frame, [contour], 0, (0, 255, 0), 2)
+                # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            else:
+                print("cannot find thymio")
+        
+        
 
     def get_robot_pos_and_angle(self):
         robot_center = None
@@ -588,7 +647,7 @@ class GlobalNav2:
 
     def calculate_global_navigation(self):
         if self.__get_most_recent_image():
-            self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self.__last_robot_center,
+            self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self._position,
                                                    self.__goal_center)
             self.__intermediary_tracker = 0
 
@@ -597,13 +656,12 @@ class GlobalNav2:
 
     def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
         if self.__get_most_recent_image():
+            self.find_thymio()
             if draw_path:
-                self.get_robot_pos_and_angle()
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
-                                    self.__last_robot_center, self.__robot_angle)
+                                    self._position[0:2], self._position[2])
             if draw_vertices:
-                self.get_robot_pos_and_angle()
                 cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
                             color=(255, 0, 0), thickness=0)
 
