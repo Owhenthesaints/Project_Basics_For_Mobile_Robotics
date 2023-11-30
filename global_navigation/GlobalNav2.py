@@ -22,10 +22,10 @@ def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_gree
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
 
     # Display the image using matplotlib
-    plt.imshow(mask_erosion)
-    plt.title("mask green")
-    plt.axis('off')  # Turn off axis labels
-    plt.show()
+    # plt.imshow(mask_erosion)
+    # plt.title("mask green")
+    # plt.axis('off')  # Turn off axis labels
+    # plt.show()
 
     return mask_erosion
 
@@ -77,8 +77,8 @@ def perspective_transformation(image):
     centers = []
 
     # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (23, 0, 0)
-    (max_blue, max_green, max_red) = (62, 255, 121)
+    (min_blue, min_green, min_red) = (18, 0, 93)
+    (max_blue, max_green, max_red) = (46, 255, 141)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
@@ -217,14 +217,13 @@ def scale_contour(original_contour, desired_min_distance):
     center = ((x + w // 2), (y + h // 2))
 
     scaled_adequate = False
-    scale_factor = 1.3;
+    scale_factor = 1.3
 
     while (not scaled_adequate):
         # Scale each point of the contour relative to the center
         scaled_contour = np.array([[(point[0][0] - center[0]) * scale_factor + center[0],
                                     (point[0][1] - center[1]) * scale_factor + center[1]]
                                    for point in original_contour], dtype=np.int32)
-        # print(scaled_contour)
         # checking if contour is scaled enough
         min_distance = float('inf')
 
@@ -239,7 +238,7 @@ def scale_contour(original_contour, desired_min_distance):
         #             print(scale_factor)
         else:
             scaled_adequate = True
-            print("adequate")
+            print("Adequate Scaling achieved for obstacles")
 
     return scaled_contour
 
@@ -254,7 +253,7 @@ def process_obstacles(contours):
         peri = cv2.arcLength(cnt, True)
         vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
         sides = len(vertices)
-        print(sides)
+        #print(sides)
 
         if sides == 4:
             num_obstacles += 1
@@ -301,12 +300,12 @@ def process_background(image):
     # Scale_factor
 
     # Defining the the RGB threshold values for the obstacles
-    (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 0)
-    (max_blue_obst, max_green_obst, max_red_obst) = (255, 199, 44)
+    (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 39)
+    (max_blue_obst, max_green_obst, max_red_obst) = (238, 255, 87)
 
     # Defining the the RGB threshold values for the goal destination
-    (min_blue_goal, min_green_goal, min_red_goal) = (94, 147, 77)
-    (max_blue_goal, max_green_goal, max_red_goal) = (255, 255, 106)
+    (min_blue_goal, min_green_goal, min_red_goal) = (0, 0, 49)
+    (max_blue_goal, max_green_goal, max_red_goal) = (238, 213, 159)
 
     # Processing the obstacles to find the vertices and edges
     processed_obstacles = process_image(image, min_blue_obst, min_green_obst, min_red_obst, max_blue_obst,
@@ -315,10 +314,10 @@ def process_background(image):
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
 
     # Display the processed grayscale mask using matplotlib
-    plt.imshow(processed_obstacles, cmap='gray')
-    plt.title("goal")
-    plt.axis('off')
-    plt.show()
+    # plt.imshow(processed_obstacles, cmap='gray')
+    # plt.title("goal")
+    # plt.axis('off')
+    # plt.show()
 
     # Processing the goal destination to find the center
     processed_goal = process_image(image, min_blue_goal, min_green_goal, min_red_goal, max_blue_goal, max_green_goal,
@@ -327,16 +326,16 @@ def process_background(image):
     goal_center = process_goal(goal_contours)
 
     # Display the processed grayscale mask using matplotlib
-    plt.imshow(processed_goal, cmap='gray')
-    plt.title("goal")
-    plt.axis('off')
-    plt.show()
+    # plt.imshow(processed_goal, cmap='gray')
+    # plt.title("goal")
+    # plt.axis('off')
+    # plt.show()
 
     return obstacle_vertices, obstacle_edges, num_obstacles, goal_center
 
 
 # INPUTS: vertices of obstacles, the robot position, goal position
-def getShortestPath(shape_vertices, Rob_pos, Goal_pos):
+def get_shortest_path(shape_vertices, rob_pos, goal_pos):
     polygons = []
     for shape in shape_vertices:
         polygon = []
@@ -347,8 +346,8 @@ def getShortestPath(shape_vertices, Rob_pos, Goal_pos):
     graph = vg.VisGraph()
     graph.build(polygons)
 
-    startPosition = vg.Point(Rob_pos[0], Rob_pos[1])
-    endPosition = vg.Point(Goal_pos[0], Goal_pos[1])
+    startPosition = vg.Point(rob_pos[0], rob_pos[1])
+    endPosition = vg.Point(goal_pos[0], goal_pos[1])
 
     shortestPath = graph.shortest_path(startPosition, endPosition)
     # print(shortestPath)
@@ -356,7 +355,7 @@ def getShortestPath(shape_vertices, Rob_pos, Goal_pos):
 
 
 # INPUTS: vertices of obstacles, the robot position, goal position
-def getShortestPath(shape_vertices, Rob_pos, Goal_pos):
+def get_shortest_path(shape_vertices, Rob_pos, Goal_pos):
     polygons = []
     for shape in shape_vertices:
         polygon = []
@@ -478,7 +477,7 @@ def init_background(video_stream):
             image_initial = image.copy()
             height, width, channels = image.shape
             # this might be needed because the transformation matrix isnt always that good
-            transformation_matrix = perspective_transformation(image)
+            #transformation_matrix = perspective_transformation(image)
             # Apply the new percpective on the frame
             if not transformation_matrix_found:
                 transformation_matrix = perspective_transformation(image)
@@ -487,7 +486,6 @@ def init_background(video_stream):
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
                 new_perspective_image = image
-            if not background_found:
                 #             plt.imshow(new_perspective_image)
                 #             plt.title("new perspective")
                 #             plt.show()
@@ -500,13 +498,13 @@ def init_background(video_stream):
                 #                 obstacle_vertices = obstacle_vertices.reshape(1, 8, 2)
                 #                 print(obstacle_vertices)
 
-                obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(
-                    new_perspective_image)
-                print('vertices', obstacle_vertices)
-                # print('edges', obstacle_edges)
-                print('goal', goal_center)
-                successInit = (num_obstacles == 2 and goal_center is not None)
-                print('background found', background_found)
+            obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(new_perspective_image)
+            print('vertices', obstacle_vertices)
+            print('num obstacles', num_obstacles)
+            # print('edges', obstacle_edges)
+            print('goal', goal_center)
+            successInit = (num_obstacles == 2 and goal_center is not None)
+            print('background found', successInit)
 
     return obstacle_vertices, goal_center, transformation_matrix
 
@@ -545,18 +543,21 @@ class GlobalNav2:
     __robot_angle = None
 
     def __init__(self):
-        self.__CAMERA_ID = 1
+        self.__CAMERA_ID = 0
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
-        self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
-            self.__video_stream)
+        # self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
+        #    self.__video_stream)
         self._position = None
 
-    def get_most_recent_image(self):
+    def __get_most_recent_image(self, transformation: bool = True):
         detected, self.__image = self.__video_stream.read()
+        if detected and transformation:
+            self.__get_warped_perspective_image()
         return detected
+    
 
     def get_robot_pos_and_angle(self):
-        if self.get_most_recent_image():
+        if self.__get_most_recent_image():
             height, width, channels = self.__image.shape
             self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
                                                                (width, height))
@@ -567,14 +568,19 @@ class GlobalNav2:
                 return None
             else:
                 self.__last_robot_center = robot_center
-                self._position = np.concatenate(robot_center[0], robot_center[1], self.__robot_angle)
+                self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
                 return self._position
         else:
             return None
+        
+    def __get_warped_perspective_image(self):
+        height, width, channels = self.__image.shape
+        self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
+                                                               (width, height))
 
     def calculate_global_navigation(self):
-        if self.get_most_recent_image():
-            self.__shortest_path = getShortestPath(self.__obstacle_vertices, self.__last_robot_center,
+        if self.__get_most_recent_image():
+            self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self.__last_robot_center,
                                                    self.__goal_center)
             self.__intermediary_tracker = 0
 
@@ -582,23 +588,25 @@ class GlobalNav2:
         return self.__on_objective
 
     def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
-        if draw_path:
-            draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
-                                self.__last_robot_center, self.__robot_angle)
-        if draw_vertices:
-            cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
-                          color=(255, 0, 0), thickness=0)
+        if self.__get_most_recent_image(transformed):
+            if draw_path:
+                draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
+                                    self.__last_robot_center, self.__robot_angle)
+            if draw_vertices:
+                cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
+                            color=(255, 0, 0), thickness=0)
 
-        if transformed:
-            if self.__new_perspective_image is not None:
-                cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
+            if transformed:
+                if self.__new_perspective_image is not None:
+                    cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
+                else:
+                    cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
             else:
-                return None
-        else:
-            if self.__image is not None:
                 cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
-            else:
-                return None
+                
+        else:
+            print("no image to show")
+            return False
 
     def get_next_position(self):
         if len(self.__shortest_path) <= self.__intermediary_tracker:
