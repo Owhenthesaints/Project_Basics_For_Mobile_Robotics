@@ -452,7 +452,7 @@ def calibrateHSV(video_stream, CAMERA_ID=1):
 # function initializes the webcam
 def init_camera_QRdetector(camera_id):
     video_stream = cv2.VideoCapture(camera_id)
-    time.sleep(1)
+    time.sleep(2)
     QR_detector = cv2.QRCodeDetectorAruco()
     if not video_stream.isOpened():
         raise IOError("Cannot open webcam")
@@ -545,31 +545,34 @@ class GlobalNav2:
     def __init__(self):
         self.__CAMERA_ID = 0
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
-        # self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
-        #    self.__video_stream)
+        self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
+            self.__video_stream)
+        self.__get_most_recent_image()
         self._position = None
 
-    def __get_most_recent_image(self, transformation: bool = True):
+    def __get_most_recent_image(self):
         detected, self.__image = self.__video_stream.read()
-        if detected and transformation:
+        if detected:
             self.__get_warped_perspective_image()
         return detected
     
 
     def get_robot_pos_and_angle(self):
-        if self.__get_most_recent_image():
-            height, width, channels = self.__image.shape
-            self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                               (width, height))
-            self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                       self.QR_detector,
-                                                                                       self.__transformation_matrix)
-            if robot_center is None:
-                return None
-            else:
-                self.__last_robot_center = robot_center
-                self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
-                return self._position
+        robot_center = None
+        while robot_center is None:
+            if self.__get_most_recent_image():
+                height, width, channels = self.__image.shape
+                self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
+                                                                (width, height))
+                self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
+                                                                                        self.QR_detector,
+                                                                                        self.__transformation_matrix)
+                if robot_center is None:
+                    continue
+                else:
+                    self.__last_robot_center = robot_center
+                    self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
+                    return self._position
         else:
             return None
         
@@ -588,11 +591,14 @@ class GlobalNav2:
         return self.__on_objective
 
     def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
-        if self.__get_most_recent_image(transformed):
+        if self.__get_most_recent_image():
             if draw_path:
+                self.get_robot_pos_and_angle()
+                self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
                                     self.__last_robot_center, self.__robot_angle)
             if draw_vertices:
+                self.get_robot_pos_and_angle()
                 cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
                             color=(255, 0, 0), thickness=0)
 
@@ -617,3 +623,8 @@ class GlobalNav2:
             return next_pos_to_go
         else:
             return None
+
+    def __del__(self):
+        cv2.destroyWindow(NORMAL_IMAGE_NAME)
+        cv2.destroyWindow(TRANSFORMED_IMAGE_NAME)
+        self.__video_stream.release()
