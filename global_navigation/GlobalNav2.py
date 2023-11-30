@@ -556,30 +556,31 @@ class GlobalNav2:
             self.__get_warped_perspective_image()
         return detected
     
-
     def get_robot_pos_and_angle(self):
-        robot_center = None
-        while robot_center is None:
-            if self.__get_most_recent_image():
-                print("stuck finding robot center")
-                height, width, channels = self.__image.shape
-                self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                                (width, height))
-                self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                        self.QR_detector)
-                # plt.imshow(self.__new_perspective_image)
-                # plt.title("transformed")
-                # plt.axis('off')  # Turn off axis labels
-                # plt.show()
-                
-                if robot_center is None:
-                    continue
-                else:
-                    self.__last_robot_center = robot_center
-                    self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
-                    return self._position
+        return self._position
+
+    def update_robot_pos_and_angle(self):
+        updated = False
+        if self.__get_most_recent_image():
+            print("stuck finding robot center")
+            height, width, channels = self.__image.shape
+            self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
+                                                            (width, height))
+            self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
+                                                                                    self.QR_detector)
+            # plt.imshow(self.__new_perspective_image)
+            # plt.title("transformed")
+            # plt.axis('off')  # Turn off axis labels
+            # plt.show()
+            
+            if robot_center is None:
+                return False
+            else:
+                self.__last_robot_center = robot_center
+                self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
+                return True
         else:
-            return None
+            return False
         
     def __get_warped_perspective_image(self):
         height, width, channels = self.__image.shape
