@@ -452,8 +452,8 @@ def calibrateHSV(video_stream, CAMERA_ID=1):
 # function initializes the webcam
 def init_camera_QRdetector(camera_id):
     video_stream = cv2.VideoCapture(camera_id)
-    time.sleep(2)
-    QR_detector = cv2.QRCodeDetector()
+    time.sleep(1)
+    QR_detector = cv2.QRCodeDetectorAruco()
     if not video_stream.isOpened():
         raise IOError("Cannot open webcam")
     return video_stream, QR_detector
@@ -509,7 +509,7 @@ def init_background(video_stream):
     return obstacle_vertices, goal_center, transformation_matrix
 
 
-def get_robot_pos_angle(image, QR_detector):
+def get_robot_pos_angle(image, QR_detector, transformation_matrix):
     robot_angle = None
     robot_center = None
     qr_vertices = None
@@ -567,7 +567,7 @@ class GlobalNav2:
             self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
                                                             (width, height))
             self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                    self.QR_detector)
+                                                                                    self.QR_detector, self.__transformation_matrix)
             # plt.imshow(self.__new_perspective_image)
             # plt.title("transformed")
             # plt.axis('off')  # Turn off axis labels
