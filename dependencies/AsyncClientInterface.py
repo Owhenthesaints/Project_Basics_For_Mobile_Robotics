@@ -37,6 +37,7 @@ class AsyncClientInterface:
         self.client = ClientAsync()
         self.node = aw(self.client.wait_for_node())
         aw(self.node.lock())
+        aw(self.node.compile("""call leds.prox.v(0, 0)\ncall leds.prox.h(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.temperature(0, 0)\ncall leds.top(0, 0, 0)\ncall leds.circle(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.buttons(0, 0, 0, 0)\ncall leds.sound(0)\ncall leds.rc(0)"""))
         self._refl_calib = refl_calib
         self._delta_calib = delta_calib
 
