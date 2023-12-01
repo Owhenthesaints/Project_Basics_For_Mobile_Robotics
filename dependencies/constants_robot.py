@@ -41,8 +41,8 @@ ANGLE_TRESHOLD = np.pi/4
 ####################################  local navigation  ##########
 LOCAL_NAV_SWITCH = 1000
 # Scale factors that divide sensor inputs and memory inputs
-SENSOR_SCALE = 800
-MEMORY_SCALE = 20
+# SENSOR_SCALE = 800
+# MEMORY_SCALE = 20
 
 
 
