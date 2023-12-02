@@ -581,7 +581,7 @@ class GlobalNav2:
         print("finding thymio")
         # filter out red color to get triangle
         # Convert the frame from BGR to HSV
-        self.__get_warped_perspective_image()
+        self.__get_most_recent_image()
         hsv = cv2.cvtColor(self.__new_perspective_image, cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
@@ -589,23 +589,23 @@ class GlobalNav2:
         upper_red = np.array([10, 255, 255])
 
         # Create a mask for the red color
+        kernel = np.ones((5, 5), np.uint8)
         mask = cv2.inRange(hsv, lower_red, upper_red)
+        # mask_dilation = cv2.dilate(mask, kernel, iterations=1)
+        # mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
         
-        # mask
-        # plt.imshow(mask)
+        # plt.imshow(mask_erosion)
         # plt.title("transformed")
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
 
         # Find contours in the mask
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         # Filter out triangles based on the number of vertices
         for contour in contours:
-            approx = cv2.approxPolyDP(contour, 0.04 * cv2.arcLength(contour, True), True)
+            approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
             if len(approx) == 3:
                 cnt = np.squeeze(approx)
-                print(cnt)
                 position, angle =  find_pos_angle(cnt)
                 self._position = np.array([position[0], position[1], angle])
                 # # Draw a bounding box around the detected triangle
@@ -626,7 +626,7 @@ class GlobalNav2:
                                                                (width, height))
 
     def calculate_global_navigation(self):
-        if self.__get_most_recent_image():
+        if self.__get_most_recent_image() and self._position is not None:
             self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self._position,
                                                    self.__goal_center)
             self.__intermediary_tracker = 0
@@ -636,7 +636,6 @@ class GlobalNav2:
 
     def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
         if self.__get_most_recent_image():
-            self.find_thymio()
             if draw_path:
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,

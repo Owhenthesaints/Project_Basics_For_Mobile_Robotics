@@ -7,17 +7,16 @@ from kalman_filter.kalman import kalman_filter
 from thymio_movement.ThymioRobot import ThymioRobot
 from global_navigation.GlobalNav2 import GlobalNav2
 
-DO_KALMAN = True
-LOCAL_AVOIDANCE = True
+DO_KALMAN = False
+LOCAL_AVOIDANCE = False
 VISION = True
+MOVEMENT = False
 
 if __name__ == "__main__":
 
     # CAMERA INITIALISATION
     global_navigation = GlobalNav2()
     print("done")
-    rob_pos = global_navigation.get_robot_pos_and_angle()
-    print(rob_pos)
 
 
     ### add kalman filter ###################
@@ -32,8 +31,11 @@ if __name__ == "__main__":
                 little_thymio.local_nav()
 
         if VISION:
-            global_navigation.show_image(False, False, False)
-            rob_pos = global_navigation.get_robot_pos_and_angle()
+            # waiting to find thymio position
+            while not global_navigation.find_thymio():
+                pass
+            global_navigation.show_image(True, True, True)
+            rob_pos = global_navigation.get_position_and_angle()
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")
@@ -57,7 +59,8 @@ if __name__ == "__main__":
 
 
         ####### astolfi controller ##########
-        little_thymio.apply_motor_command()
+        if MOVEMENT:
+            little_thymio.apply_motor_command()
         #####################################
 
 
