@@ -1,5 +1,5 @@
 import numpy as np
-
+import cv2
 import dependencies.constants_robot as constants_robot
 # from dependencies.helper_functions import NoThymioError
 from kalman_filter.EKF import ExtendedKalmanFilter
@@ -33,9 +33,10 @@ if __name__ == "__main__":
         if VISION:
             # waiting to find thymio position
             while not global_navigation.find_thymio():
-                pass
-            global_navigation.show_image(True, True, True)
+                print("...")
+            global_navigation.show_image(True, True, False)
             rob_pos = global_navigation.get_position_and_angle()
+            print("here")
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")
@@ -64,8 +65,11 @@ if __name__ == "__main__":
         #####################################
 
 
-        if global_navigation.is_on_objective:
-            little_thymio.kill()
+        # if global_navigation.is_on_objective:
+        #     little_thymio.kill()
+        key = cv2.waitKey(20)
+        if key == 27: # exit on ESC
+            break
 
 
 
