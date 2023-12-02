@@ -8,7 +8,7 @@ from dependencies.helper_functions import convert_angle
 
 TRANSFORMED_IMAGE_NAME = "transformed image"
 NORMAL_IMAGE_NAME = "normal image"
-
+ANGLE_OFFSET = np.pi
 
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
@@ -618,7 +618,8 @@ class GlobalNav2:
             if len(approx) == 3:
                 cnt = np.squeeze(approx)
                 position, angle =  find_pos_angle(cnt)
-                self._position = np.array([position[0], position[1], angle])
+                angle = convert_angle(angle + ANGLE_OFFSET)
+                self._position = np.array([position[0], position[1], -angle])
                 # # Draw a bounding box around the detected triangle
                 # x, y, w, h = cv2.boundingRect(contour)
                 # cv2.drawContours(frame, [contour], 0, (0, 255, 0), 2)
@@ -650,7 +651,7 @@ class GlobalNav2:
             if draw_path:
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
-                                    self._position[0:2], self._position[2])
+                                    self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
             if draw_vertices:
                 cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
                             color=(255, 0, 0), thickness=0)

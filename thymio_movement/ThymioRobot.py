@@ -65,7 +65,7 @@ class ThymioRobot():
                              self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
 
     def apply_motor_command(self):
-        movement_vector = self._position - self.goal
+        movement_vector = self.goal - self._position
         rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
         print("movement vector:", movement_vector)
         # if rho < self.__THRESHOLD:
@@ -74,7 +74,7 @@ class ThymioRobot():
         alpha = -self._position[2] - self.goal[2]
         beta = - self.goal[2]
         forward_speed = self.__KAPPA_RHO * rho
-        turning_velocity = self.__WHEEL_DISTANCE / 2 * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
+        turning_velocity = (self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         print("movement array:", movement_array[0], movement_array[1])
         self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),
