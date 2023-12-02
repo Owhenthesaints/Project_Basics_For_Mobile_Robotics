@@ -3,10 +3,10 @@ import numpy as np
 # the parameters you should look at (under)
 
 ####################################  ThymioRobot class  ##########
-DEFAULT_KAPPA_ALPHA = 250
-DEFAULT_KAPPA_BETA = 250
-DEFAULT_KAPPA_RHO = 5
-DEFAULT_THRESHOLD = 1
+DEFAULT_KAPPA_ALPHA = 0.3
+DEFAULT_KAPPA_BETA = -0.1
+DEFAULT_KAPPA_RHO = 0.1
+DEFAULT_THRESHOLD = 0.1
 LOCAL_NAV_SWITCH = 1000
 LOCAL_NAV_FORWARD_SPEED = 70
 LOCAL_NAV_FACTOR = 0.01

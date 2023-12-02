@@ -10,7 +10,7 @@ from global_navigation.GlobalNav2 import GlobalNav2
 DO_KALMAN = False
 LOCAL_AVOIDANCE = False
 VISION = True
-MOVEMENT = False
+MOVEMENT = True
 
 if __name__ == "__main__":
 
@@ -33,10 +33,11 @@ if __name__ == "__main__":
         if VISION:
             # waiting to find thymio position
             while not global_navigation.find_thymio():
-                print("...")
+                pass
             global_navigation.show_image(True, True, False)
-            rob_pos = global_navigation.get_position_and_angle()
-            print("here")
+            print(global_navigation.get_position_and_angle())
+            little_thymio.set_new_position(global_navigation.get_position_and_angle())
+            little_thymio.set_new_goal(global_navigation.get_next_position())
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")

@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvisgraph as vg
+from dependencies.helper_functions import convert_angle
 
 TRANSFORMED_IMAGE_NAME = "transformed image"
 NORMAL_IMAGE_NAME = "normal image"
@@ -660,9 +661,18 @@ class GlobalNav2:
         if len(self.__shortest_path) <= self.__intermediary_tracker:
             self.__on_objective = True
         if self.__shortest_path is not None:
-            next_pos_to_go = self.__shortest_path[self.__intermediary_tracker]
+            vg_point_next_pos = self.__shortest_path[1]
+            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])
             self.__intermediary_tracker += 1
-            return next_pos_to_go
+            if len(self.__shortest_path) == 2:
+                next_angle = np.arctan2((next_pos_to_go[1] - self._position[1]), (next_pos_to_go[0] - self._position[0]))
+                next_angle = convert_angle(next_angle)
+            else:                        
+                vg_point_next_next_pos = self.__shortest_path[2]
+                next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
+                next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1], next_next_pos_to_go[0] - next_pos_to_go[0])
+                next_angle = convert_angle(next_angle)
+            return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         else:
             return None
 
