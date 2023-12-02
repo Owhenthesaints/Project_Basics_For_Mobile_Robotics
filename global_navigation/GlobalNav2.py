@@ -581,6 +581,7 @@ class GlobalNav2:
         print("finding thymio")
         # filter out red color to get triangle
         # Convert the frame from BGR to HSV
+        self.__get_warped_perspective_image()
         hsv = cv2.cvtColor(self.__new_perspective_image, cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
@@ -611,34 +612,13 @@ class GlobalNav2:
                 # x, y, w, h = cv2.boundingRect(contour)
                 # cv2.drawContours(frame, [contour], 0, (0, 255, 0), 2)
                 # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                return True
             else:
                 print("cannot find thymio")
+                return False
         
-        
-
-    def get_robot_pos_and_angle(self):
-        robot_center = None
-        while robot_center is None:
-            if self.__get_most_recent_image():
-                print("stuck finding robot center")
-                height, width, channels = self.__image.shape
-                self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                                (width, height))
-                self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                        self.QR_detector)
-                # plt.imshow(self.__new_perspective_image)
-                # plt.title("transformed")
-                # plt.axis('off')  # Turn off axis labels
-                # plt.show()
-                
-                if robot_center is None:
-                    continue
-                else:
-                    self.__last_robot_center = robot_center
-                    self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
-                    return self._position
-        else:
-            return None
+    def get_position_and_angle(self):
+        return self._position    
         
     def __get_warped_perspective_image(self):
         height, width, channels = self.__image.shape
