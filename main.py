@@ -35,9 +35,11 @@ if __name__ == "__main__":
             while not global_navigation.find_thymio():
                 pass
             global_navigation.show_image(True, True, False)
-            print(global_navigation.get_position_and_angle())
-            little_thymio.set_new_position(global_navigation.get_position_and_angle())
-            little_thymio.set_new_goal(global_navigation.get_next_position())
+            position = (global_navigation.get_position_and_angle())
+            print("current position:", position)
+            little_thymio.set_new_position(position)
+            new_goal = np.array([position[0], position[1], np.pi/2])
+            little_thymio.set_new_goal(new_goal)
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")

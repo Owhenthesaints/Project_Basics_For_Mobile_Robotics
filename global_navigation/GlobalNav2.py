@@ -592,16 +592,26 @@ class GlobalNav2:
         # Create a mask for the red color
         kernel = np.ones((5, 5), np.uint8)
         mask = cv2.inRange(hsv, lower_red, upper_red)
+        
+        # Find connected components with stats
+        _, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+
+        # Get the index of the connected component with the largest area
+        largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1  # Skip the background component
+
+        # Create a mask for the largest connected component
+        largest_component_mask = (labels == largest_component_index).astype(np.uint8)
+        
         # mask_dilation = cv2.dilate(mask, kernel, iterations=1)
         # mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
         
-        # plt.imshow(mask_erosion)
+        # plt.imshow(largest_component_mask)
         # plt.title("transformed")
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
 
         # Find contours in the mask
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(largest_component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # Filter out triangles based on the number of vertices
         for contour in contours:
             approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
