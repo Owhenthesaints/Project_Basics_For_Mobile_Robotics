@@ -84,9 +84,9 @@ def perspective_transformation(image):
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
-    plt.imshow(processed_mask)
-    plt.axis('off')  # Turn off axis labels
-    plt.show()
+    # plt.imshow(processed_mask)
+    # plt.axis('off')  # Turn off axis labels
+    # plt.show()
 
     # extracting the contours of the object
     contours, _ = cv2.findContours(processed_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -491,6 +491,7 @@ def init_background(video_stream):
                 #print(transformation_matrix)
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
+                print("background not found")
                 continue
                 #             plt.imshow(new_perspective_image)
                 #             plt.title("new perspective")
@@ -572,9 +573,12 @@ class GlobalNav2:
 
     def __init__(self):
         self.__CAMERA_ID = 0
+        print("YO HERE")
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
+        print("hello")
         self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
             self.__video_stream)
+        print("can you hear me")
         self.__get_most_recent_image()
         self._position = None
 
@@ -604,10 +608,13 @@ class GlobalNav2:
     
         # Find connected components with stats
         _, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
-
-        # Get the index of the connected component with the largest area
-        largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1  # Skip the background component
-
+        
+        try:
+            # Get the index of the connected component with the largest area
+            largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1  # Skip the background component
+        except ValueError as e:
+            print("Thymio is not found")
+            return False
         # Create a mask for the largest connected component
         largest_component_mask = (labels == largest_component_index).astype(np.uint8)
         
@@ -629,16 +636,6 @@ class GlobalNav2:
         # dilated_edges = cv2.dilate(canny_img, kernel, iterations=4)
         
         # plt.imshow(self.__image)
-        # plt.axis('off')  # Turn off axis labels
-        # plt.show()
-        
-        # plt.imshow(self.__new_perspective_image)
-        # plt.title("transformed")
-        # plt.axis('off')  # Turn off axis labels
-        # plt.show()
-        
-        # plt.imshow(mask)
-        # plt.title("transformed")
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
 
