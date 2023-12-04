@@ -565,8 +565,7 @@ class GlobalNav2:
     __qr_vertices = None
     __new_perspective_image = None
     __shortest_path = None
-    __intermediary_tracker: int = 0
-    __on_objective = False
+    __on_goal = False
     __last_robot_center = None
     __goal_center = None
     __robot_angle = None
@@ -667,10 +666,9 @@ class GlobalNav2:
         if self.__get_most_recent_image() and self._position is not None:
             self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self._position,
                                                    self.__goal_center)
-            self.__intermediary_tracker = 0
 
-    def is_on_objective(self):
-        return self.__on_objective
+    def get_on_goal(self):
+        return self.__on_goal
 
     def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
         if self.__get_most_recent_image():
@@ -694,21 +692,28 @@ class GlobalNav2:
             print("no image to show")
             return False
 
+    def is_on_goal(self):
+        distance_to_goal = np.sqrt((self._position[0] - self.__goal_center[0])**2 + (self._position[1] - self.__goal_center[1])**2) 
+        print("goal_distance:", distance_to_goal)
+        self.__on_goal = distance_to_goal < 20
+
     def get_next_position(self):
-        if len(self.__shortest_path) <= self.__intermediary_tracker:
-            self.__on_objective = True
-        if self.__shortest_path is not None:
+        print(self.__shortest_path)
+        if len(self.__shortest_path) == 2:
+            self.is_on_goal()
             vg_point_next_pos = self.__shortest_path[1]
             next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])
-            self.__intermediary_tracker += 1
-            if len(self.__shortest_path) == 2:
-                next_angle = np.arctan2((next_pos_to_go[1] - self._position[1]), (next_pos_to_go[0] - self._position[0]))
-                next_angle = convert_angle(next_angle)
-            else:                        
-                vg_point_next_next_pos = self.__shortest_path[2]
-                next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
-                next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1], next_next_pos_to_go[0] - next_pos_to_go[0])
-                next_angle = convert_angle(next_angle)
+            next_angle = np.arctan2((next_pos_to_go[1] - self._position[1]), (next_pos_to_go[0] - self._position[0]))
+            next_angle = convert_angle(next_angle)
+            return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
+        elif self.__shortest_path is not None:
+            vg_point_next_pos = self.__shortest_path[1]
+            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])                       
+            vg_point_next_next_pos = self.__shortest_path[2]
+            next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
+            next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1], next_next_pos_to_go[0] - next_pos_to_go[0])
+            next_angle = convert_angle(next_angle)
+            print("two or more nodes remaining", next_pos_to_go, next_angle)
             return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         else:
             return None

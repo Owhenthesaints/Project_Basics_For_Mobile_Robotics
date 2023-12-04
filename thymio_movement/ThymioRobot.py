@@ -2,6 +2,7 @@ import numpy as np
 
 import dependencies.constants_robot as constants_robot
 from dependencies.AsyncClientInterface import AsyncClientInterface
+from dependencies.helper_functions import convert_angle
 
 
 class ThymioRobot():
@@ -71,10 +72,14 @@ class ThymioRobot():
         if rho < self.__THRESHOLD:
             self.on_objective = True
             return
-        alpha = -self._position[2] - self.goal[2]
-        beta = - self.goal[2]
+        alpha = -self._position[2] + convert_angle(np.arctan2(movement_vector[1],movement_vector[0]))
+        beta = - self._position[2] - alpha
         forward_speed = self.__KAPPA_RHO * rho
         turning_velocity = (self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
+        if forward_speed > 100:
+            turning_velocity *= 100 / forward_speed
+            forward_speed = 100
+        
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         print("movement array:", movement_array[0], movement_array[1])
         self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),

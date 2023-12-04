@@ -7,9 +7,6 @@ def calibrateHSV():
     for i in range(100):
         image_detected, image = video_stream.read()
     if image_detected:
-        plt.imshow(image)
-        plt.axis('off')  # Turn off axis labels
-        plt.show()
         find_thresh(image)
     
 # function initializes the webcam            

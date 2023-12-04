@@ -8,7 +8,7 @@ from thymio_movement.ThymioRobot import ThymioRobot
 from global_navigation.GlobalNav2 import GlobalNav2
 
 DO_KALMAN = False
-LOCAL_AVOIDANCE = False
+LOCAL_AVOIDANCE = True
 VISION = True
 MOVEMENT = True
 
@@ -26,11 +26,13 @@ if __name__ == "__main__":
     
     #### TESTING
     
-    while not global_navigation.find_thymio():
-        pass
-    position = global_navigation.get_position_and_angle()
-    goal = np.array([position[0]-200, position[1], np.pi/2])
-    little_thymio.set_new_goal(goal)
+    # while not global_navigation.find_thymio():
+    #     pass
+    # position = global_navigation.get_position_and_angle()
+    # print("current pos:", position)
+    # goal = np.array([position[0] - 100, position[1] + 100, 0])
+    # little_thymio.set_new_position(position)
+    # little_thymio.set_new_goal(goal)
     
     #### END TESTING
     
@@ -45,9 +47,11 @@ if __name__ == "__main__":
             while not global_navigation.find_thymio():
                 pass
             global_navigation.show_image(True, True, False)
-            curr_position = (global_navigation.get_position_and_angle())
-            print("current position:", curr_position)
+            curr_position = np.array(global_navigation.get_position_and_angle())
             little_thymio.set_new_position(curr_position)
+            print("current position:", curr_position)
+            little_thymio.set_new_goal(global_navigation.get_next_position())
+
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")
@@ -75,12 +79,12 @@ if __name__ == "__main__":
             little_thymio.apply_motor_command()
         #####################################
 
-
-        if little_thymio.on_objective:
+        if global_navigation.get_on_goal():
             little_thymio.kill()
 
         key = cv2.waitKey(20)
         if key == 27: # exit on ESC
+            little_thymio.kill()
             break
 
 

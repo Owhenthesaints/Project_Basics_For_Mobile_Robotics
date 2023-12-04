@@ -3,14 +3,14 @@ import numpy as np
 # the parameters you should look at (under)
 
 ####################################  ThymioRobot class  ##########
-DEFAULT_KAPPA_ALPHA = 1500
-DEFAULT_KAPPA_BETA = -3000
-DEFAULT_KAPPA_RHO = 2.3
+DEFAULT_KAPPA_ALPHA = 2.2 * 105
+DEFAULT_KAPPA_BETA = -0.65
+DEFAULT_KAPPA_RHO = 0.7
 DEFAULT_THRESHOLD = 20
 LOCAL_NAV_SWITCH = 1000
 LOCAL_NAV_FORWARD_SPEED = 70
 LOCAL_NAV_FACTOR = 0.01
-MAX_GRID = [480, 640]
+MAX_GRID = [640, 480]
 
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.31 mm^2/s^2
