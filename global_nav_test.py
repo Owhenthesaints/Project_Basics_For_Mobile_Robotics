@@ -7,6 +7,8 @@ global_navigation = GlobalNav2()
 while True:
     while not global_navigation.find_thymio():
         pass
+    
+    # plt.
     global_navigation.show_image(True, True, False)
     print(global_navigation._position)
     key = cv2.waitKey(20)

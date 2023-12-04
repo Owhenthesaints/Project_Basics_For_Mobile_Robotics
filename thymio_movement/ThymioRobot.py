@@ -68,9 +68,9 @@ class ThymioRobot():
         movement_vector = self.goal - self._position
         rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
         print("movement vector:", movement_vector)
-        # if rho < self.__THRESHOLD:
-        #     self.on_objective = True
-        #     return
+        if rho < self.__THRESHOLD:
+            self.on_objective = True
+            return
         alpha = -self._position[2] - self.goal[2]
         beta = - self.goal[2]
         forward_speed = self.__KAPPA_RHO * rho

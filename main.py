@@ -17,13 +17,23 @@ if __name__ == "__main__":
     # CAMERA INITIALISATION
     global_navigation = GlobalNav2()
     print("done")
-
-
+    
     ### add kalman filter ###################
     if DO_KALMAN:
         KF = ExtendedKalmanFilter(rob_pos)
     ########################################
     little_thymio = ThymioRobot()
+    
+    #### TESTING
+    
+    while not global_navigation.find_thymio():
+        pass
+    position = global_navigation.get_position_and_angle()
+    goal = np.array([position[0]-200, position[1], np.pi/2])
+    little_thymio.set_new_goal(goal)
+    
+    #### END TESTING
+    
     while little_thymio.is_alive:
 
         if LOCAL_AVOIDANCE:
@@ -35,11 +45,9 @@ if __name__ == "__main__":
             while not global_navigation.find_thymio():
                 pass
             global_navigation.show_image(True, True, False)
-            position = (global_navigation.get_position_and_angle())
-            print("current position:", position)
-            little_thymio.set_new_position(position)
-            new_goal = np.array([position[0], position[1], np.pi/2])
-            little_thymio.set_new_goal(new_goal)
+            curr_position = (global_navigation.get_position_and_angle())
+            print("current position:", curr_position)
+            little_thymio.set_new_position(curr_position)
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")
@@ -68,13 +76,12 @@ if __name__ == "__main__":
         #####################################
 
 
-        # if global_navigation.is_on_objective:
-        #     little_thymio.kill()
+        if little_thymio.on_objective:
+            little_thymio.kill()
+
         key = cv2.waitKey(20)
         if key == 27: # exit on ESC
             break
-
-
 
 
 

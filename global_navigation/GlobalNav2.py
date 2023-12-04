@@ -573,12 +573,9 @@ class GlobalNav2:
 
     def __init__(self):
         self.__CAMERA_ID = 0
-        print("YO HERE")
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
-        print("hello")
         self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
             self.__video_stream)
-        print("can you hear me")
         self.__get_most_recent_image()
         self._position = None
 
