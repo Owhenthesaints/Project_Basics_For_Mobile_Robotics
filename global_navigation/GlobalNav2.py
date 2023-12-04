@@ -19,6 +19,7 @@ def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_gree
 
     # getting the mask image from the HSV image using threshold values
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
+    #median = cv2.median
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
 
@@ -78,10 +79,14 @@ def perspective_transformation(image):
     centers = []
 
     # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (0, 249, 85)
-    (max_blue, max_green, max_red) = (50, 255, 153)
+    (min_blue, min_green, min_red) = (11, 61, 0)
+    (max_blue, max_green, max_red) = (77, 255, 255)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
+
+    plt.imshow(processed_mask)
+    plt.axis('off')  # Turn off axis labels
+    plt.show()
 
     # extracting the contours of the object
     contours, _ = cv2.findContours(processed_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -106,7 +111,8 @@ def perspective_transformation(image):
 
     if len(centers) == 4:
         center_points = np.float32(centers).reshape(-1, 1, 2)
-        transformation_matrix = cv2.getPerspectiveTransform(center_points, dest_corners)
+        transformation_matrix = np.array(cv2.getPerspectiveTransform(center_points, dest_corners)).astype(np.float32)
+        print("transformationMatrix: ", transformation_matrix)
         return transformation_matrix
     else:
         # Return the initial image if not enough contours are detected
@@ -301,12 +307,12 @@ def process_background(image):
     # Scale_factor
 
     # Defining the the RGB threshold values for the obstacles
-    (min_blue_obst, min_green_obst, min_red_obst) = (0, 150, 0)
-    (max_blue_obst, max_green_obst, max_red_obst) = (255, 255, 74)
+    (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 0)
+    (max_blue_obst, max_green_obst, max_red_obst) = (255, 171, 29)
 
     # Defining the the RGB threshold values for the goal destination
-    (min_blue_goal, min_green_goal, min_red_goal) = (0, 38, 0)
-    (max_blue_goal, max_green_goal, max_red_goal) = (109, 97, 85)
+    (min_blue_goal, min_green_goal, min_red_goal) = (97, 102, 71)
+    (max_blue_goal, max_green_goal, max_red_goal) = (118, 192, 121)
 
     # Processing the obstacles to find the vertices and edges
     processed_obstacles = process_image(image, min_blue_obst, min_green_obst, min_red_obst, max_blue_obst,
@@ -314,7 +320,7 @@ def process_background(image):
     (obstacle_contours, _) = cv2.findContours(processed_obstacles, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
 
-    # Display the processed grayscale mask using matplotlib
+    #Display the processed grayscale mask using matplotlib
     # plt.imshow(processed_obstacles, cmap='gray')
     # plt.title("goal")
     # plt.axis('off')
@@ -452,10 +458,13 @@ def calibrateHSV(video_stream, CAMERA_ID=1):
 # function initializes the webcam
 def init_camera_QRdetector(camera_id):
     video_stream = cv2.VideoCapture(camera_id)
-    time.sleep(2)
+    time.sleep(0.5)
     QR_detector = cv2.QRCodeDetector()
     if not video_stream.isOpened():
         raise IOError("Cannot open webcam")
+    # discard 50 most recent images
+    for i in range(50):
+        video_stream.read()
     return video_stream, QR_detector
 
 
@@ -478,14 +487,11 @@ def init_background(video_stream):
             height, width, channels = image.shape
             # this might be needed because the transformation matrix isnt always that good
             transformation_matrix = perspective_transformation(image)
-            # Apply the new percpective on the frame
-            if not transformation_matrix_found:
-                transformation_matrix = perspective_transformation(image)
-                transformation_matrix_found = True
-            if transformation_matrix_found:
+            if transformation_matrix is not None:
+                #print(transformation_matrix)
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
-                new_perspective_image = image
+                continue
                 #             plt.imshow(new_perspective_image)
                 #             plt.title("new perspective")
                 #             plt.show()
@@ -583,16 +589,19 @@ class GlobalNav2:
         # filter out red color to get triangle
         # Convert the frame from BGR to HSV
         self.__get_most_recent_image()
-        hsv = cv2.cvtColor(self.__new_perspective_image, cv2.COLOR_BGR2HSV)
+        
+        # flood_fill_kernel = np.zeros((self.__image.shape[0] + 2, image.shape[1] + 2), dtype=np.uint8)
+        
+        hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
-        lower_red = np.array([0, 100, 100])
-        upper_red = np.array([10, 255, 255])
+        lower_red = np.array([0, 158, 66])
+        upper_red = np.array([18, 255, 255])
 
         # Create a mask for the red color
-        kernel = np.ones((5, 5), np.uint8)
+        # kernel = np.ones((5, 5), np.uint8)
         mask = cv2.inRange(hsv, lower_red, upper_red)
-        
+    
         # Find connected components with stats
         _, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
 
@@ -602,10 +611,33 @@ class GlobalNav2:
         # Create a mask for the largest connected component
         largest_component_mask = (labels == largest_component_index).astype(np.uint8)
         
-        # mask_dilation = cv2.dilate(mask, kernel, iterations=1)
+        # kernel = (7, 7)
+        # mask_dilation = cv2.dilate(largest_component_mask, kernel, iterations=1)
         # mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
+        #processed_mask = process_image(largest_component_mask, lower_red[0], lower_red[1], lower_red[2], upper_red[0], upper_red[1], upper_red[2])
         
-        # plt.imshow(largest_component_mask)
+        # # # make triangle edges less sharp
+        # sigma = 0
+        # kernel = (7, 7)
+        # lower_threshold = 100
+        # upper_threshold = 150
+        # aperture_size = 7
+        # blurred_mask = cv2.GaussianBlur(largest_component_mask, kernel, sigma)
+        # dilate_mask = cv2.dilate(blurred_mask, kernel, iterations=1)
+        # erosion_mask = cv2.erode(dilate_mask, kernel, iterations=1)
+        # canny_img = cv2.Canny(erosion_mask, lower_threshold, upper_threshold, apertureSize=aperture_size, L2gradient=True)
+        # dilated_edges = cv2.dilate(canny_img, kernel, iterations=4)
+        
+        # plt.imshow(self.__image)
+        # plt.axis('off')  # Turn off axis labels
+        # plt.show()
+        
+        # plt.imshow(self.__new_perspective_image)
+        # plt.title("transformed")
+        # plt.axis('off')  # Turn off axis labels
+        # plt.show()
+        
+        # plt.imshow(mask)
         # plt.title("transformed")
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
@@ -614,7 +646,7 @@ class GlobalNav2:
         contours, _ = cv2.findContours(largest_component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # Filter out triangles based on the number of vertices
         for contour in contours:
-            approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
+            approx = cv2.approxPolyDP(contour, 0.03 * cv2.arcLength(contour, True), True)
             if len(approx) == 3:
                 cnt = np.squeeze(approx)
                 position, angle =  find_pos_angle(cnt)
