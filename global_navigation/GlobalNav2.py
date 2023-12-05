@@ -536,29 +536,37 @@ def get_robot_pos_angle(image, QR_detector):
             angle_window = []  # Reset the window for the next set of frames
     return robot_angle, robot_center, qr_vertices
 
-## REFACTOR THIS CODE
-def find_pos_angle(p):
-    """
-    Compute the medians of the triangle defined by p[0], p[1], p[2](lists of 2 elements)
-    taking CV2 convention into account
-    """
-
-    #middle of traingle segment
-    m = np.array([
-    [(p[1][0] + p[2][0]) / 2, (p[1][1] + p[2][1]) / 2],
-    [(p[2][0] + p[0][0]) / 2, (p[2][1] + p[0][1]) / 2],
-    [(p[0][0] + p[1][0]) / 2, (p[0][1] + p[1][1]) / 2]])
+def find_thymio_position_angle(triangle_contours):
     
+    triangle_contours = np.array(triangle_contours)
+    triangle_side_lengths = np.array([[np.linalg.norm(triangle_contours[0] - triangle_contours[1])],
+                                    [np.linalg.norm(triangle_contours[1] - triangle_contours[2])],
+                                    [np.linalg.norm(triangle_contours[2] - triangle_contours[0])]])
+    # draw a line from middle of shortest side of triangle to the tip of the triangle
+    #print(triangle_side_lengths)
+    shortest_side_index = np.argmin(triangle_side_lengths)
     
-    # length of medianes on x and y
-    d = p - m
+    if shortest_side_index == 0:
+        front = triangle_contours[2]
+        middle = np.array([(triangle_contours[0][0] + triangle_contours[1][0]) / 2, (triangle_contours[0][1] + triangle_contours[1][1]) / 2])
+    elif shortest_side_index == 1:
+        front = triangle_contours[0]
+        middle = np.array([(triangle_contours[1][0] + triangle_contours[2][0]) / 2, (triangle_contours[1][1] + triangle_contours[2][1]) / 2])
+    else:
+        front = triangle_contours[1]  
+        middle = np.array([(triangle_contours[2][0] + triangle_contours[0][0]) / 2, (triangle_contours[2][1] + triangle_contours[0][1]) / 2])
 
-    # abs lenght of medianes
-    l = d[:,0]**2 + d[:,1]**2
-
-    i = np.argmax(l)
-    angle = np.arctan2(d[i][1], d[i][0])
-    return m[i], angle
+    print("front:", front)
+    print("middle: ", middle)
+    # find the center of the triangle
+    center = np.array((front+middle)/2)
+    print("center: ", center)
+    
+    # find the angle of the triangle
+    angle = np.arctan2(front[1]-middle[1], front[0]-middle[0])
+    print("angle: ", angle)
+    
+    return center, angle  
 
 class GlobalNav2:
     __image = None
@@ -589,8 +597,6 @@ class GlobalNav2:
         # filter out red color to get triangle
         # Convert the frame from BGR to HSV
         self.__get_most_recent_image()
-        
-        # flood_fill_kernel = np.zeros((self.__image.shape[0] + 2, image.shape[1] + 2), dtype=np.uint8)
         
         hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
 
@@ -642,7 +648,7 @@ class GlobalNav2:
             approx = cv2.approxPolyDP(contour, 0.03 * cv2.arcLength(contour, True), True)
             if len(approx) == 3:
                 cnt = np.squeeze(approx)
-                position, angle =  find_pos_angle(cnt)
+                position, angle =  find_thymio_position_angle(cnt)
                 angle = convert_angle(angle + ANGLE_OFFSET)
                 self._position = np.array([position[0], position[1], -angle])
                 # # Draw a bounding box around the detected triangle
