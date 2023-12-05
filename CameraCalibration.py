@@ -1,9 +1,11 @@
 import cv2
 import time
+import matplotlib.pyplot as plt
 
 def calibrateHSV():
     init_camera_QRdetector(CAMERA_ID)
-    image_detected, image = video_stream.read()
+    for i in range(100):
+        image_detected, image = video_stream.read()
     if image_detected:
         find_thresh(image)
     
@@ -46,7 +48,7 @@ def find_thresh(image):
 
 
     #creating a loop to get the feedback of the changes in trackbars
-    while True:
+    while True:        
         #reading the trackbar values for thresholds
         min_blue = cv2.getTrackbarPos('min_blue', 'Track Bars')
         min_green = cv2.getTrackbarPos('min_green', 'Track Bars')

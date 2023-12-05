@@ -2,6 +2,7 @@ import numpy as np
 
 import dependencies.constants_robot as constants_robot
 from dependencies.AsyncClientInterface import AsyncClientInterface
+from dependencies.helper_functions import convert_angle
 
 
 class ThymioRobot():
@@ -65,17 +66,26 @@ class ThymioRobot():
                              self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
 
     def apply_motor_command(self):
-        movement_vector = self._position - self.goal
+        movement_vector = self.goal - self._position
         rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
+        print("movement vector:", movement_vector)
         if rho < self.__THRESHOLD:
             self.on_objective = True
             return
-        alpha = -self._position[2] - self.goal[2]
-        beta = - self.goal[2]
+        alpha = convert_angle(-self._position[2] + convert_angle(np.arctan2(movement_vector[1],movement_vector[0]))+np.pi)
+        beta = convert_angle(- self._position[2] - alpha - np.pi)
+        print("alpha:", alpha)
+        print("beta:", beta)
         forward_speed = self.__KAPPA_RHO * rho
-        turning_velocity = self.__WHEEL_DISTANCE / 2 * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
+        turning_velocity = (self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
+        print("forward_speed :", forward_speed)
+        print("turning_velocity: ", turning_velocity)
+        if forward_speed > 100:
+            turning_velocity *= 100 / forward_speed
+            forward_speed = 100
+        
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
-        print(movement_array[0], movement_array[1])
-        self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),
-                                    right_motor=int(np.floor(movement_array[1])))
+        print("movement array:", movement_array[0], movement_array[1])
+        #self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),
+        #                            right_motor=int(np.floor(movement_array[1])))
         self.on_objective = False

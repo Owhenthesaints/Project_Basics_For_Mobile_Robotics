@@ -41,7 +41,7 @@ def kalman_filter(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = E
     else:
         kalman.update(has_vision, pos_measure, speed)
 
-    kalman_est_update= kalman.current_estimate() # based on what the kalman has updated
+    kalman_est_update, _= kalman.current_estimate() # based on what the kalman has updated
 
 
     return kalman_est_update, kidnapping

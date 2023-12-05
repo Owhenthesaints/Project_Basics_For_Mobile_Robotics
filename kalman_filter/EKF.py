@@ -71,7 +71,7 @@ class ExtendedKalmanFilter:
                         [      dcosA/2,      dsinA/2, dt/cst.L, 0, 1]])
 
     def current_estimate(self):
-            return self.x
+            return self.x, self.__P
 
     def predict(self):
         self.x = self.x @ self.__f
