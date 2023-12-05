@@ -2,8 +2,8 @@ import numpy as np
 import cv2
 import dependencies.constants_robot as constants_robot
 # from dependencies.helper_functions import NoThymioError
-from kalman_filter.EKF import ExtendedKalmanFilter
-from kalman_filter.kalman import kalman_filter
+from kalman_filter.Filter_class import ExtendedKalmanFilter
+from kalman_filter.Filter_func import kalman_func
 from thymio_movement.ThymioRobot import ThymioRobot
 from global_navigation.GlobalNav2 import GlobalNav2
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     
     ### add kalman filter ###################
     if DO_KALMAN:
-        KF = ExtendedKalmanFilter(rob_pos)
+        KF = ExtendedKalmanFilter(global_navigation.get_position_and_angle())
     ########################################
     little_thymio = ThymioRobot()
     
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
         if DO_KALMAN:
             speed = little_thymio.get_sensors(sensor="wheels")
-            position_update, kidnapped = kalman_filter(KF, rob_pos, speed)
+            position_update, position_variance, kidnapping = kalman_func(KF, global_navigation.get_position_and_angle(), speed)
             # set the new position as argument of set_new_position
             little_thymio.set_new_position(position_update)
 
