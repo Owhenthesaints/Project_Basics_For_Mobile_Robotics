@@ -201,45 +201,7 @@ class AsyncClientInterface:
             except AttributeError:
                 raise InvalidArgumentError("attribute was not found due to wrong input being put in")
 
-    def add_event_listener(self, function: Callable[[Any, Any, Any], None], emit: list[tuple[str, int]],
-                           listening_time: int):
-        """
-        adds an event listener that will stop the program execution and wait to listen, and if a function inside the
-        thymio emits then there will be a call to the function. The calls stack
 
-        :param function: function you want to call
-        :type function: Callable
-
-        :param emit: emit takes the shape of the vars you want to read in your callable function
-        :type emit: list[tuple[str,int]]
-
-        :rtype: None
-
-
-        """
-        self.client.add_event_received_listener(function)
-
-        async def prog():
-            error = await self.node.register_events(emit)
-            if error is not None:
-                print(error)
-            else:
-                await self.node.watch(events=True)
-            await self.client.sleep(listening_time)
-
-    def add_listener(self, function: Callable[[..., dict], None], sleep_duration: int = None) -> None:
-        """
-        :param function: The event listener which should have
-        :param sleep_duration: defines the sleep duration
-        :return: None
-        """
-
-        async def prog():
-            aw(self.node.watch(variables=True))
-            self.node.add_variables_changed_listener(function)
-            aw(self.client.sleep())
-
-        self.client.run_async_program(prog)
 
     def __del__(self):
         aw(self.node.unlock())
