@@ -91,7 +91,7 @@ class ExtendedKalmanFilter:
         # Update the covariance matrix
         self.process_covariance = (np.eye(len(self.state)) - K @ H) @ self.process_covariance
 
-        return self.state, self.process_covariance
+        return self.state[0:3], self.process_covariance
     
     def update_encoder(self, measurement):
         H = self.jacobian_measurement_encoder
@@ -107,4 +107,4 @@ class ExtendedKalmanFilter:
         # Update the covariance matrix
         self.process_covariance = (np.eye(len(self.state)) - K @ H) @ self.process_covariance
 
-        return self.state, self.process_covariance
+        return self.state[0:3], self.process_covariance

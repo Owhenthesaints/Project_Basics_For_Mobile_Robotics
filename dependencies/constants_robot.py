@@ -3,10 +3,10 @@ import numpy as np
 # the parameters you should look at (under)
 
 ####################################  ThymioRobot class  ##########
-DEFAULT_KAPPA_ALPHA = 300 *4
-DEFAULT_KAPPA_BETA = - 70 *2
-DEFAULT_KAPPA_RHO = 0.7
-DEFAULT_THRESHOLD = 20
+DEFAULT_KAPPA_ALPHA = 300 *6
+DEFAULT_KAPPA_BETA = - 70 *0.2
+DEFAULT_KAPPA_RHO = 1
+DEFAULT_THRESHOLD = 40
 LOCAL_NAV_SWITCH = 1000
 LOCAL_NAV_FORWARD_SPEED = 70
 LOCAL_NAV_FACTOR = 0.01
@@ -15,9 +15,8 @@ MAX_GRID = [640, 480]
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.31 mm^2/s^2
 SPEED_VAR = 12.31
-POSITION_VAR = 2**2
-ANGLE_VAR = (np.pi/10)**2
-CORR_FACTOR = 2                  # also for motion control : correlation factor of thymio real speed and wheel pwm
+POSITION_VAR = 4
+ANGLE_VAR = 0.1               # also for motion control : correlation factor of thymio real speed and wheel pwm
 
 # uncertainty about measurement
 RPX = POSITION_VAR

@@ -224,7 +224,7 @@ def scale_contour(original_contour, desired_min_distance):
     center = ((x + w // 2), (y + h // 2))
 
     scaled_adequate = False
-    scale_factor = 1.3
+    scale_factor = 1.7
 
     while (not scaled_adequate):
         # Scale each point of the contour relative to the center
