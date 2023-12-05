@@ -572,6 +572,7 @@ class GlobalNav2:
     __last_robot_center = None
     __goal_center = None
     __robot_angle = None
+    __position_array : list[np.ndarray]= []
 
     def __init__(self):
         self.__CAMERA_ID = 0
@@ -671,15 +672,34 @@ class GlobalNav2:
     def get_on_goal(self):
         return self.__on_goal
 
-    def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
+    def override_position(self, position):
+        self._position = position
+
+        
+    def append_position_to_history(self):
+        self.__position_array.append(self._position)
+
+        
+
+    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True, uncertainty: bool = False, estimate = 0, probability = 0):
         if self.__get_most_recent_image():
             if draw_path:
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
                                     self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
-            if draw_vertices:
-                cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
-                            color=(255, 0, 0), thickness=0)
+            if trajectory and len(self.__position_array)!= 0:
+                purple_bgr = (255, 0, 255)
+                for position in self.__position_array:
+                    cv2.circle(self.__new_perspective_image, (int(position[0]), int(position[1])), 5, purple_bgr, -1)  # Red circles
+ 
+            if uncertainty:
+                pos = np.array(np.round(estimate[0:2]), dtype=int)
+                angle = estimate[2]
+                prob = np.array(np.round(np.sqrt(np.array([probability[1,1], probability[0,0]]))), dtype=int)
+                
+                # Using cv2.ellipse() method
+                # Draw a ellipse with red line borders of thickness of 2 px
+                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360, color=(0, 255, 255), thickness=2)
 
             if transformed:
                 if self.__new_perspective_image is not None:
@@ -688,7 +708,6 @@ class GlobalNav2:
                     cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
             else:
                 cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
-                
         else:
             print("no image to show")
             return False

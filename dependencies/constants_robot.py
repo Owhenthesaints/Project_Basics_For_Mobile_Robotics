@@ -27,11 +27,11 @@ RRW = SPEED_VAR
 
 # uncertainty about dynamic model
 # assume less certain about the model used
-QPX = POSITION_VAR*1
-QPY = POSITION_VAR*1
-QAN = ANGLE_VAR*1
-QLW = SPEED_VAR*1
-QRW = SPEED_VAR*1
+QPX = POSITION_VAR*2
+QPY = POSITION_VAR*2
+QAN = ANGLE_VAR*2
+QLW = SPEED_VAR*2
+QRW = SPEED_VAR*2
 
 # thresholds for deciding kidnapping
 DIST_TRESHOLD = 100
