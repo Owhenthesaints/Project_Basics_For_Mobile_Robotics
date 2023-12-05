@@ -395,7 +395,6 @@ def drawPathGraph(shape_vertices, shortestPath, pathImage):
             # creating a list of edges to store path into
     edgelist = []
     for i, node in enumerate(shortestPath[:-1]):
-        print(shortestPath[i])
         edgelist.append((shortestPath[i], shortestPath[i + 1]))
 
     color = (0, 255, 255)
@@ -556,15 +555,11 @@ def find_thymio_position_angle(triangle_contours):
         front = triangle_contours[1]  
         middle = np.array([(triangle_contours[2][0] + triangle_contours[0][0]) / 2, (triangle_contours[2][1] + triangle_contours[0][1]) / 2])
 
-    print("front:", front)
-    print("middle: ", middle)
     # find the center of the triangle
     center = np.array((front+middle)/2)
-    print("center: ", center)
     
     # find the angle of the triangle
     angle = np.arctan2(front[1]-middle[1], front[0]-middle[0])
-    print("angle: ", angle)
     
     return center, angle  
 
@@ -704,7 +699,6 @@ class GlobalNav2:
         self.__on_goal = distance_to_goal < 20
 
     def get_next_position(self):
-        print(self.__shortest_path)
         if len(self.__shortest_path) == 2:
             self.is_on_goal()
             vg_point_next_pos = self.__shortest_path[1]
