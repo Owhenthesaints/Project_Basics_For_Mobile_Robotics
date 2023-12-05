@@ -89,6 +89,6 @@ class ThymioRobot():
         
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         print("movement array:", movement_array[0], movement_array[1])
-        # self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),
-        #                             right_motor=int(np.floor(movement_array[1])))
+        self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[1])),
+                                   right_motor=int(np.floor(movement_array[0])))
         self.on_objective = False
