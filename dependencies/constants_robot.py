@@ -13,18 +13,20 @@ LOCAL_NAV_FACTOR = 0.01
 MAX_GRID = [640, 480]
 
 ####################################  Kalman filter class  ##########
-# speed variance obtanied 12.31 mm^2/s^2
-SPEED_VAR = 12.31
+# speed variance obtanied 12.304 mm^2/s^2
+SPEED_VAR = 12.30
 POSITION_VAR = 2**2
 ANGLE_VAR = (np.pi/10)**2
-SPEED_FACTOR = 1/3                  
+SPEED_CONVERT = 0.43
+PIXEL_SPEED_FACTOR = 0.8
+SPEED_FACTOR = SPEED_CONVERT*PIXEL_SPEED_FACTOR                 
 
 # uncertainty about measurement
 RPX = POSITION_VAR
 RPY = POSITION_VAR
 RAN = ANGLE_VAR
-RLW = SPEED_VAR
-RRW = SPEED_VAR
+RLW = SPEED_VAR/2
+RRW = SPEED_VAR/2
 
 # uncertainty about dynamic model
 # assume less certain about the model used
