@@ -713,7 +713,8 @@ class GlobalNav2:
 
             if transformed:
                 if self.__new_perspective_image is not None:
-                    cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
+                    annotated_and_regular = np.concatenate((self.__image, self.__new_perspective_image), axis=0)
+                    cv2.imshow("Annotated and Regular Image",annotated_and_regular)
                 else:
                     cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
             else:
