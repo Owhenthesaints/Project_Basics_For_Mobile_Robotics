@@ -50,28 +50,29 @@ class ExtendedKalmanFilter:
         cos = np.cos(self.state[2])
         v_forward = (self.state[3] + self.state[4]) / 2
 
-        self.state_transition_matrix[0, 3] = self.dT * cos / 2
-        self.state_transition_matrix[0, 4] = self.dT * cos / 2
+        self.state_transition_matrix[0, 3] = -self.dT * cos / 2
+        self.state_transition_matrix[0, 4] = -self.dT * cos / 2
         self.state_transition_matrix[1, 3] = self.dT * sin / 2
         self.state_transition_matrix[1, 4] = self.dT * sin / 2
         # check - and + in practice
-        self.state_transition_matrix[2, 3] = self.dT / cst.L
-        self.state_transition_matrix[2, 4] =  -self.dT / cst.L
+        self.state_transition_matrix[2, 3] = -self.dT / cst.L1
+        self.state_transition_matrix[2, 4] = self.dT / cst.L1
 
-        self.jacobian_state_matrix[0, 2] = - self.dT * v_forward * sin 
-        self.jacobian_state_matrix[0, 3] = self.dT * cos / 2
-        self.jacobian_state_matrix[0, 4] = self.dT * cos / 2
+        self.jacobian_state_matrix[0, 2] = self.dT * v_forward * sin 
         self.jacobian_state_matrix[1, 2] = self.dT * v_forward * cos
+
+        self.jacobian_state_matrix[0, 3] = -self.dT * cos / 2
+        self.jacobian_state_matrix[0, 4] = -self.dT * cos / 2
         self.jacobian_state_matrix[1, 3] = self.dT * sin / 2
         self.jacobian_state_matrix[1, 4] = self.dT * sin / 2
         # check - and + in practice
-        self.jacobian_state_matrix[2, 3] = self.dT / cst.L
-        self.jacobian_state_matrix[2, 4] = -self.dT / cst.L
+        self.jacobian_state_matrix[2, 3] = -self.dT / cst.L1
+        self.jacobian_state_matrix[2, 4] = self.dT / cst.L1
 
         return self.state_transition_matrix, self.jacobian_state_matrix
 
     def get_state(self):
-        return self.state, self.process_covariance
+        return self.state[0:3], self.process_covariance
 
     def predict(self):
 
@@ -90,7 +91,7 @@ class ExtendedKalmanFilter:
         R = self.measurement_covariance
         # Innovation or measurement residual
         
-        measurement[3:5] *= cst.SPEED_FACTOR
+        measurement[3:5] = measurement[3:5] * cst.SPEED_FACTOR
         y = measurement - self.measurement_vision @ self.state
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R
@@ -108,7 +109,7 @@ class ExtendedKalmanFilter:
         R = self.measurement_covariance_encoder
         # Innovation or measurement residual
         
-        measurement[0:2] *= cst.SPEED_FACTOR
+        measurement[0:2] =  measurement[0:2]*cst.SPEED_FACTOR
         y = measurement - (self.measurement_encoder @ self.state)
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R
@@ -119,4 +120,3 @@ class ExtendedKalmanFilter:
         # Update the covariance matrix
         self.process_covariance = (np.eye(len(self.state)) - K @ H) @ self.process_covariance
 
-        return self.state[0:3], self.process_covariance

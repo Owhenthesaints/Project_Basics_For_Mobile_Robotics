@@ -75,7 +75,7 @@ def find_thresh(image):
 
 
 CAMERA_ID = 1
-video_stream, _ = init_camera_QRdetector(0)
+video_stream, _ = init_camera_QRdetector(CAMERA_ID)
 calibrateHSV()
 kill_camera(video_stream)
 

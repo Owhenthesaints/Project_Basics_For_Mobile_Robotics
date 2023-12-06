@@ -79,7 +79,11 @@ def perspective_transformation(image):
     centers = []
 
     # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (11, 61, 0)
+    # (min_blue, min_green, min_red) = (11, 61, 0)
+    # (max_blue, max_green, max_red) = (77, 255, 255)
+
+    # on Jiarui's computer
+    (min_blue, min_green, min_red) = (11, 61, 55)
     (max_blue, max_green, max_red) = (77, 255, 255)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
@@ -575,7 +579,9 @@ class GlobalNav2:
     __position_array : list[np.ndarray]= []
 
     def __init__(self):
-        self.__CAMERA_ID = 0
+        # self.__CAMERA_ID = 0
+        # on Jiarui's computer
+        self.__CAMERA_ID = 1
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
         self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
             self.__video_stream)
@@ -597,8 +603,12 @@ class GlobalNav2:
         hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
-        lower_red = np.array([0, 158, 66])
-        upper_red = np.array([18, 255, 255])
+        # lower_red = np.array([0, 158, 66])
+        # upper_red = np.array([18, 255, 255])
+
+        # on Jiarui's computer
+        lower_red = np.array([0, 158, 130])
+        upper_red = np.array([252, 255, 255])
 
         # Create a mask for the red color
         # kernel = np.ones((5, 5), np.uint8)
@@ -633,7 +643,7 @@ class GlobalNav2:
         # canny_img = cv2.Canny(erosion_mask, lower_threshold, upper_threshold, apertureSize=aperture_size, L2gradient=True)
         # dilated_edges = cv2.dilate(canny_img, kernel, iterations=4)
         
-        # plt.imshow(self.__image)
+        # plt.imshow(largest_component_mask)
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
 

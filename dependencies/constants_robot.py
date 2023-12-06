@@ -15,12 +15,12 @@ MAX_GRID = [640, 480]
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.304 mm^2/s^2
 SPEED_VAR = 12.30
-POSITION_VAR = 2**2
-ANGLE_VAR = (np.pi/10)**2
+POSITION_VAR = 4
+ANGLE_VAR = 0.09
 SPEED_CONVERT = 0.43
-PIXEL_SPEED_FACTOR = 0.8
+PIXEL_SPEED_FACTOR = 0.41
 SPEED_FACTOR = SPEED_CONVERT*PIXEL_SPEED_FACTOR                 
-
+# SPEED_FACTOR = 1/3  
 # uncertainty about measurement
 RPX = POSITION_VAR
 RPY = POSITION_VAR
@@ -30,11 +30,11 @@ RRW = SPEED_VAR/2
 
 # uncertainty about dynamic model
 # assume less certain about the model used
-QPX = POSITION_VAR*4
-QPY = POSITION_VAR*4
-QAN = ANGLE_VAR*4
-QLW = SPEED_VAR*4
-QRW = SPEED_VAR*4
+QPX = POSITION_VAR*5
+QPY = POSITION_VAR*5
+QAN = ANGLE_VAR*5
+QLW = SPEED_VAR*5
+QRW = SPEED_VAR*5
 
 # thresholds for deciding kidnapping
 DIST_TRESHOLD = 100
@@ -55,5 +55,6 @@ LOCAL_NAV_SWITCH = 1000
 # no need to touch these(under)
 DELTA_ROBOT = 1.35
 REFL_ROBOT = 1.35
-L = 90                           # in mm, dist between wheel centers
+L = 90
+L1 = L*85
 

@@ -11,6 +11,7 @@ def kalman_func(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = Ext
         kalman.get_dt()
     kalman.set_state_transition_matrix()
     kalman.predict()
+    print("predicted state", kalman.state[0:3])
     kidnap = False
     
     # check if the robot has vision
@@ -25,11 +26,12 @@ def kalman_func(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = Ext
             kidnap = True
             kalman.init_state_vector(position, wheelspeed)
         else:
-            kalman_est_pos, kalman_variance = kalman.update_vision(measurement)
+            kalman.update_vision(measurement)
+            
     else:
-        kalman_est_pos, kalman_variance = kalman.update_encoder(wheelspeed)
+        kalman.update_encoder(wheelspeed)
         print("No vision, only encoder")
-    # kalman_est_pos, kalman_variance = kalman.get_state()
 
+    kalman_est_pos, kalman_variance = kalman.get_state()
     return kalman_est_pos, kalman_variance, kidnap       
 
