@@ -25,7 +25,7 @@ def kalman_filter(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = E
     kidnapping = False
 
     if(has_vision):
-        kalman_est_pos = kalman.current_estimate()
+        kalman_est_pos, _ = kalman.current_estimate()
         pos_est_old, angle_est_old = kalman_est_pos[0:2], kalman_est_pos[2]
         angle_diff_abs = abs(convert_angle(angle_est_old - pos_measure[2]))
         dist = np.sqrt(np.sum(np.square(pos_est_old - pos_measure[0:2])))
