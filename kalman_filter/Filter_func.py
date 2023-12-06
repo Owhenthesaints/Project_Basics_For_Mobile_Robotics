@@ -6,7 +6,7 @@ import dependencies.constants_robot as cst
 def kalman_func(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = ExtendedKalmanFilter, position = None, wheelspeed = None, dt = None):
 
     if dt is not None:
-        kalman.dT = dt
+        kalman._dT = dt
     else:
         kalman.get_dt()
     kalman.set_state_transition_matrix()
