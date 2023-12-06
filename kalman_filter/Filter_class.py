@@ -89,7 +89,8 @@ class ExtendedKalmanFilter:
         H = self.jacobian_measurement_vision
         R = self.measurement_covariance
         # Innovation or measurement residual
-        speed_factor = 1/3
+        
+        measurement[3:5] *= cst.SPEED_FACTOR
         y = measurement - self.measurement_vision @ self.state
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R
@@ -106,7 +107,8 @@ class ExtendedKalmanFilter:
         H = self.jacobian_measurement_encoder
         R = self.measurement_covariance_encoder
         # Innovation or measurement residual
-        speed_factor = 1/3
+        
+        measurement[0:2] *= cst.SPEED_FACTOR
         y = measurement - (self.measurement_encoder @ self.state)
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R

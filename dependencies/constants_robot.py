@@ -17,7 +17,7 @@ MAX_GRID = [640, 480]
 SPEED_VAR = 12.31
 POSITION_VAR = 2**2
 ANGLE_VAR = (np.pi/10)**2
-CORR_FACTOR = 2                  # also for motion control : correlation factor of thymio real speed and wheel pwm
+SPEED_FACTOR = 1/3                  
 
 # uncertainty about measurement
 RPX = POSITION_VAR
