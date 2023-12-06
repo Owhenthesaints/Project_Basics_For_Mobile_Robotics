@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     pass
                 little_thymio.set_new_position(global_navigation.get_position_and_angle())
             global_navigation.append_position_to_history()
-            global_navigation.show_image(True, True, True)
+            global_navigation.show_image(True, True, True, True, estimate=position_update, probability=position_variance)
             little_thymio.set_new_goal(global_navigation.get_next_position())
 
 

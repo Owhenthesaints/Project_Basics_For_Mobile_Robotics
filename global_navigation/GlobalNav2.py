@@ -709,7 +709,7 @@ class GlobalNav2:
                 
                 # Using cv2.ellipse() method
                 # Draw a ellipse with red line borders of thickness of 2 px
-                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360, color=(0, 255, 255), thickness=2)
+                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360, color=(255, 100, 0), thickness=2)
 
             if transformed:
                 if self.__new_perspective_image is not None:
