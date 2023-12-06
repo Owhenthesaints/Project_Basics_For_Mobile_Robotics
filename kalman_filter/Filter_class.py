@@ -6,16 +6,16 @@ import dependencies.constants_robot as cst
 class ExtendedKalmanFilter:
     def __init__(self, position=np.array([0, 0, 0])):
 
-        self.init_state_vector(position)
+        
         # R
         self.measurement_covariance = np.diag([cst.RPX, cst.RPY, cst.RAN, cst.RLW, cst.RRW])
         self.measurement_covariance_encoder = np.diag([cst.RLW, cst.RRW])
         # Q
         self.process_noise_covariance = np.diag([cst.QPX, cst.QPY, cst.QAN, cst.QLW, cst.QRW])
         # f
-        self.state_transition_function = None
+        self.state_transition_matrix = None
         # F
-        self.jacobian_state_transition = None
+        self.jacobian_state_matrix = None
         # h
         self.measurement_vision = np.diag([1, 1, 1, 1, 1])
         self.measurement_encoder = np.array([[0, 0, 0, 1, 0],
@@ -26,10 +26,14 @@ class ExtendedKalmanFilter:
         #
         self.last_t = time.time()
         self.dT = None
+        self.init_state_vector(position)
 
-    def init_state_vector(self, position):
-        self.state = np.array([position[0], position[1], position[2], 0, 0])
-        self.process_covariance = np.eye(len(self.state))
+    def init_state_vector(self, position, wheelspeed = None):
+        if wheelspeed is not None:
+            self.state = np.array([position[0], position[1], position[2], wheelspeed[0], wheelspeed[1]])
+        else:
+            self.state = np.array([position[0], position[1], position[2], 0, 0])
+        self.process_covariance = self.measurement_covariance
 
     # get dT from last update
     def get_dt(self):
@@ -50,8 +54,9 @@ class ExtendedKalmanFilter:
         self.state_transition_matrix[0, 4] = self.dT * cos / 2
         self.state_transition_matrix[1, 3] = self.dT * sin / 2
         self.state_transition_matrix[1, 4] = self.dT * sin / 2
-        self.state_transition_matrix[2, 3] = self.dT * sin / cst.L
-        self.state_transition_matrix[2, 4] =  - self.dT * sin / cst.L
+        # check - and + in practice
+        self.state_transition_matrix[2, 3] = self.dT / cst.L
+        self.state_transition_matrix[2, 4] =  -self.dT / cst.L
 
         self.jacobian_state_matrix[0, 2] = - self.dT * v_forward * sin 
         self.jacobian_state_matrix[0, 3] = self.dT * cos / 2
@@ -59,11 +64,14 @@ class ExtendedKalmanFilter:
         self.jacobian_state_matrix[1, 2] = self.dT * v_forward * cos
         self.jacobian_state_matrix[1, 3] = self.dT * sin / 2
         self.jacobian_state_matrix[1, 4] = self.dT * sin / 2
+        # check - and + in practice
         self.jacobian_state_matrix[2, 3] = self.dT / cst.L
-        self.jacobian_state_matrix[2, 4] = - self.dT / cst.L
+        self.jacobian_state_matrix[2, 4] = -self.dT / cst.L
 
         return self.state_transition_matrix, self.jacobian_state_matrix
-    
+
+    def get_state(self):
+        return self.state, self.process_covariance
 
     def predict(self):
 
@@ -81,6 +89,8 @@ class ExtendedKalmanFilter:
         H = self.jacobian_measurement_vision
         R = self.measurement_covariance
         # Innovation or measurement residual
+        
+        measurement[3:5] *= cst.SPEED_FACTOR
         y = measurement - self.measurement_vision @ self.state
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R
@@ -97,6 +107,8 @@ class ExtendedKalmanFilter:
         H = self.jacobian_measurement_encoder
         R = self.measurement_covariance_encoder
         # Innovation or measurement residual
+        
+        measurement[0:2] *= cst.SPEED_FACTOR
         y = measurement - (self.measurement_encoder @ self.state)
         # Innovation (or residual) covariance
         S = H @ self.process_covariance @ H.T + R

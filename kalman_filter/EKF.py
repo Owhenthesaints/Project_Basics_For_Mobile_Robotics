@@ -58,8 +58,8 @@ class ExtendedKalmanFilter:
                         [      1,       0,     0, 0, 0],
                         [      0,       1,     0, 0, 0],
                         [      0,       0,     1, 0, 0],
-                        [dcosA/2, dsinA/2,  -dt/cst.L, 1, 0],
-                        [dcosA/2, dsinA/2, dt/cst.L, 0, 1]])
+                        [dcosA/2, dsinA/2,  dt/cst.L, 1, 0],
+                        [dcosA/2, dsinA/2, -dt/cst.L, 0, 1]])
         # may have to change the sign of both dt/cst.L
         
         # Transspose of jacobian matrix of f
@@ -67,8 +67,8 @@ class ExtendedKalmanFilter:
                         [            1,            0,     0, 0, 0],
                         [            0,            1,     0, 0, 0],
                         [-mSpeed*dsinA, mSpeed*dcosA,     1, 0, 0],
-                        [      dcosA/2,      dsinA/2,  -dt/cst.L, 1, 0],
-                        [      dcosA/2,      dsinA/2, dt/cst.L, 0, 1]])
+                        [      dcosA/2,      dsinA/2,  dt/cst.L, 1, 0],
+                        [      dcosA/2,      dsinA/2, -dt/cst.L, 0, 1]])
 
     def current_estimate(self):
             return self.x, self.__P
@@ -90,7 +90,7 @@ class ExtendedKalmanFilter:
         P = (xI - KH)P
         '''
 
-        corr_wspeed = np.array(speed)*cst.CORR_FACTOR
+        corr_wspeed = np.array(speed)*1
 
         if has_vision:
             y = np.concatenate((pos_measure, corr_wspeed)) - (self.x @ self.__H)
