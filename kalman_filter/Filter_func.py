@@ -11,7 +11,6 @@ def kalman_func(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = Ext
         kalman.get_dt()
     kalman.set_state_transition_matrix()
     kalman.predict()
-    print("predicted state", kalman.state[0:3])
     kidnap = False
     
     # check if the robot has vision

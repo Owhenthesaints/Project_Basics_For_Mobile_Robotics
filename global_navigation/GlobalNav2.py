@@ -9,6 +9,7 @@ from dependencies.helper_functions import convert_angle
 TRANSFORMED_IMAGE_NAME = "transformed image"
 NORMAL_IMAGE_NAME = "normal image"
 ANGLE_OFFSET = np.pi
+DEMO_DOUBLE_SCREEN_NAME = "annotated and regular image"
 
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
@@ -691,7 +692,7 @@ class GlobalNav2:
 
         
 
-    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True, uncertainty: bool = False, estimate = 0, probability = 0):
+    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True, double_screen: bool = True, uncertainty: bool = False, estimate = 0, probability = 0):
         if self.__get_most_recent_image():
             if draw_path:
                 self.calculate_global_navigation()
@@ -713,8 +714,11 @@ class GlobalNav2:
 
             if transformed:
                 if self.__new_perspective_image is not None:
-                    annotated_and_regular = np.concatenate((self.__image, self.__new_perspective_image), axis=0)
-                    cv2.imshow("Annotated and Regular Image",annotated_and_regular)
+                    if double_screen:
+                        annotated_and_regular = np.concatenate((self.__image, self.__new_perspective_image), axis=0)
+                        cv2.imshow(DEMO_DOUBLE_SCREEN_NAME,annotated_and_regular)
+                    else:
+                        cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
                 else:
                     cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
             else:
@@ -725,7 +729,6 @@ class GlobalNav2:
 
     def is_on_goal(self):
         distance_to_goal = np.sqrt((self._position[0] - self.__goal_center[0])**2 + (self._position[1] - self.__goal_center[1])**2) 
-        print("goal_distance:", distance_to_goal)
         self.__on_goal = distance_to_goal < 20
 
     def get_next_position(self):
@@ -743,7 +746,6 @@ class GlobalNav2:
             next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
             next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1], next_next_pos_to_go[0] - next_pos_to_go[0])
             next_angle = convert_angle(next_angle)
-            print("two or more nodes remaining", next_pos_to_go, next_angle)
             return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         else:
             return None

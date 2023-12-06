@@ -130,7 +130,7 @@ class AsyncClientInterface:
         else:
             return False
 
-    def set_sensor(self, sensor: str, value: int | list[int]) -> None:
+    def set_led(self, sensor: str, value: int | list[int]) -> None:
         """
         A function that enables you to set sensors through the node.set_variables method the leds expect values between 0 and 32
         :param sensor: input your sensor
@@ -146,9 +146,12 @@ class AsyncClientInterface:
             if isinstance(value, list) and len(value) == 3:
                 aw(self.node.wait_for_variables({"leds.top"}))
                 for index, rgb in enumerate(value):
-                    list(self.node.v.leds.top)[index] = rgb
+                    self.node.v.leds.top[index] = rgb
             else:
                 raise TypeError("either did not input list or list was not of right length")
+            
+        self.node.flush()
+
 
     def get_sensor(self, sensor: str, calibrated: bool = False) -> list[int] | int | bool:
         """

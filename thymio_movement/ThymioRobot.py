@@ -45,12 +45,11 @@ class ThymioRobot():
     def stop(self):
         self.AsyncClient.set_motors(left_motor=0, right_motor=0)
 
-    def local_nav(self):
-        while np.any(self.get_sensors() > constants_robot.LOCAL_NAV_SWITCH):
-            # first row left motor second right
-            W = np.array([[1, 1, 1, -1, -1], [-1, -1, -1, 1, 1]]) * constants_robot.LOCAL_NAV_FACTOR
-            lr_motor = W @ self.get_sensors().T + constants_robot.LOCAL_NAV_FORWARD_SPEED
-            self.AsyncClient.set_motors(left_motor=int(lr_motor[0]), right_motor=int(lr_motor[1]))
+    def apply_local_nav(self):
+        # first row left motor second right
+        W = np.array([[1, 1, 1, -1, -1], [-1, -1, -1, 1, 1]]) * constants_robot.LOCAL_NAV_FACTOR
+        lr_motor = W @ self.get_sensors().T + constants_robot.LOCAL_NAV_FORWARD_SPEED
+        self.AsyncClient.set_motors(left_motor=int(lr_motor[0]), right_motor=int(lr_motor[1]))
 
     def get_sensors(self, sensor: str = "horizontal_sensor") -> list | np.ndarray | int:
         """
@@ -64,11 +63,16 @@ class ThymioRobot():
         elif sensor == "wheels":
             return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
                              self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
+        
+    def not_angry(self):
+        self.AsyncClient.set_led("leds_top", [0, 0, 0])
+        
+    def angry(self):
+        self.AsyncClient.set_led("leds_top", [32, 0, 0])
 
     def apply_motor_command(self):
         movement_vector = self.goal - self._position
         rho = np.sqrt(movement_vector[1] ** 2 + movement_vector[0] ** 2)
-        print("movement vector:", movement_vector)
         if rho < self.__THRESHOLD:
             self.on_objective = True
             return
@@ -77,18 +81,13 @@ class ThymioRobot():
         # we add np.pi to position[2] in order to adapt to alstofy referential
         alpha = convert_angle(-self._position[2] + np.pi + np.arctan2(-movement_vector[1],movement_vector[0]))
         beta = convert_angle(- self._position[2] - alpha+ np.pi)
-        print("alpha:", alpha)
-        print("beta:", beta)
         forward_speed = self.__KAPPA_RHO * rho
         turning_velocity = -(self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
-        print("forward_speed :", forward_speed)
-        print("turning_velocity: ", turning_velocity)
         if forward_speed > 150:
             turning_velocity *= 150 / forward_speed
             forward_speed = 150
         
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
-        print("movement array:", movement_array[0], movement_array[1])
         self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[1])),
                                    right_motor=int(np.floor(movement_array[0])))
         self.on_objective = False
