@@ -15,14 +15,9 @@ MAX_GRID = [640, 480]
 ####################################  Kalman filter class  ##########
 # speed variance obtanied 12.31 mm^2/s^2
 SPEED_VAR = 12.31
-<<<<<<< HEAD
-POSITION_VAR = 4
-ANGLE_VAR = 0.1               # also for motion control : correlation factor of thymio real speed and wheel pwm
-=======
 POSITION_VAR = 2**2
 ANGLE_VAR = (np.pi/10)**2
 SPEED_FACTOR = 1/3                  
->>>>>>> jiarui
 
 # uncertainty about measurement
 RPX = POSITION_VAR
@@ -33,19 +28,11 @@ RRW = SPEED_VAR
 
 # uncertainty about dynamic model
 # assume less certain about the model used
-<<<<<<< HEAD
-QPX = POSITION_VAR*2
-QPY = POSITION_VAR*2
-QAN = ANGLE_VAR*2
-QLW = SPEED_VAR*2
-QRW = SPEED_VAR*2
-=======
 QPX = POSITION_VAR*4
 QPY = POSITION_VAR*4
 QAN = ANGLE_VAR*4
 QLW = SPEED_VAR*4
 QRW = SPEED_VAR*4
->>>>>>> jiarui
 
 # thresholds for deciding kidnapping
 DIST_TRESHOLD = 100

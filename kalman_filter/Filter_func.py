@@ -22,15 +22,10 @@ def kalman_func(kalman: ExtendedKalmanFilter(position=np.array([0, 0, 0])) = Ext
         if distance > cst.DIST_TRESHOLD or abs(angle_diff) > cst.ANGLE_TRESHOLD:
             print("Detecting kidnapping")
             kalman.get_dt()
-<<<<<<< HEAD
-            kidnapping = True
-            kalman.init_state_vector(position)
-=======
             kidnap = True
             kalman.init_state_vector(position, wheelspeed)
         else:
             kalman_est_pos, kalman_variance = kalman.update_vision(measurement)
->>>>>>> jiarui
     else:
         kalman_est_pos, kalman_variance = kalman.update_encoder(wheelspeed)
         print("No vision, only encoder")
