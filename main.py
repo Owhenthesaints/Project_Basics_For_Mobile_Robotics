@@ -38,7 +38,7 @@ if __name__ == "__main__":
     
     #### END TESTING
     
-    while little_thymio.is_alive:
+    while little_thymio.is_not_happy:
 
         if LOCAL_AVOIDANCE:
             while np.any(little_thymio.get_sensors() > constants_robot.LOCAL_NAV_SWITCH):
@@ -56,6 +56,8 @@ if __name__ == "__main__":
                     print("before update :", global_navigation.get_position_and_angle())
                     position_update, position_variance, kidnapping = kalman_func(KF, global_navigation.get_position_and_angle(), speed)
                     print("after update", position_update)
+                    if kidnapping:
+                        little_thymio.angry()
                     # set the new position as argument of set_new_position
                 else:
                     speed = little_thymio.get_sensors(sensor="wheels")
@@ -83,11 +85,11 @@ if __name__ == "__main__":
         #####################################
 
         if global_navigation.get_on_goal():
-            little_thymio.kill()
+            little_thymio.be_happy()
 
         key = cv2.waitKey(20)
         if key == 27: # exit on ESC
-            little_thymio.kill()
+            little_thymio.be_happy()
             break
 
 

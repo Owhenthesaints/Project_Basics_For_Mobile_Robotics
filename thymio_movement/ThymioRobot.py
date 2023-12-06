@@ -14,7 +14,7 @@ class ThymioRobot():
     __WHEEL_DISTANCE = 0.09  # in m
     AsyncClient = AsyncClientInterface()
     on_objective: bool = False
-    is_alive = True
+    is_not_happy = True
 
     def __init__(self, init_position=None,
                  kappa_alpha: float = constants_robot.DEFAULT_KAPPA_ALPHA,
@@ -38,8 +38,9 @@ class ThymioRobot():
     def set_new_position(self, position: np.array):
         self._position = position
 
-    def kill(self):
-        self.is_alive = False
+    def be_happy(self):
+        self.not_angry()
+        self.is_not_happy = False
         self.AsyncClient.set_motors(0, 0)
 
     def stop(self):
