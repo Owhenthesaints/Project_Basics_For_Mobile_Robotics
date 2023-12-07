@@ -64,10 +64,10 @@ class ThymioRobot():
         elif sensor == "wheels":
             return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
                              self.AsyncClient.get_sensor(self.AsyncClient.RIGHT_SPEED)])
-        
+
     def not_angry(self):
         self.AsyncClient.set_led("leds_top", [0, 0, 0])
-        
+
     def angry(self):
         self.AsyncClient.set_led("leds_top", [32, 0, 0])
 
@@ -80,15 +80,15 @@ class ThymioRobot():
         # alpha = convert_angle(-self._position[2] + convert_angle(np.arctan2(movement_vector[1],movement_vector[0]))+np.pi)
         # beta = convert_angle(- self._position[2] - alpha - np.pi)
         # we add np.pi to position[2] in order to adapt to alstofy referential
-        alpha = convert_angle(-self._position[2] + np.pi + np.arctan2(-movement_vector[1],movement_vector[0]))
-        beta = convert_angle(- self._position[2] - alpha+ np.pi)
+        alpha = convert_angle(-self._position[2] + np.pi + np.arctan2(-movement_vector[1], movement_vector[0]))
+        beta = convert_angle(- self._position[2] - alpha + np.pi)
         forward_speed = self.__KAPPA_RHO * rho
         turning_velocity = -(self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
         if forward_speed > 150:
             turning_velocity *= 150 / forward_speed
             forward_speed = 150
-        
+
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
         self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[1])),
-                                   right_motor=int(np.floor(movement_array[0])))
+                                    right_motor=int(np.floor(movement_array[0])))
         self.on_objective = False

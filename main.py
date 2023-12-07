@@ -1,11 +1,11 @@
-import numpy as np
 import cv2
+import numpy as np
+
 import dependencies.constants_robot as constants_robot
-# from dependencies.helper_functions import NoThymioError
+from global_navigation.GlobalNav2 import GlobalNav2
 from kalman_filter.Filter_class import ExtendedKalmanFilter
 from kalman_filter.Filter_func import kalman_func
 from thymio_movement.ThymioRobot import ThymioRobot
-from global_navigation.GlobalNav2 import GlobalNav2
 
 DO_KALMAN = True
 LOCAL_AVOIDANCE = True
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # CAMERA INITIALISATION
     global_navigation = GlobalNav2()
     print("done")
-    
+
     ### add kalman filter ###################
     while not global_navigation.find_thymio():
         pass
@@ -25,9 +25,9 @@ if __name__ == "__main__":
         KF = ExtendedKalmanFilter(global_navigation.get_position_and_angle())
     ########################################
     little_thymio = ThymioRobot()
-    
+
     #### TESTING
-    
+
     # while not global_navigation.find_thymio():
     #     pass
     # position = global_navigation.get_position_and_angle()
@@ -35,9 +35,9 @@ if __name__ == "__main__":
     # goal = np.array([position[0] - 100, position[1] + 100, 0])
     # little_thymio.set_new_position(position)
     # little_thymio.set_new_goal(goal)
-    
+
     #### END TESTING
-    
+
     while little_thymio.is_not_happy:
 
         if LOCAL_AVOIDANCE:
@@ -46,7 +46,6 @@ if __name__ == "__main__":
                 if global_navigation.find_thymio():
                     global_navigation.append_position_to_history()
 
-
         if VISION:
             # waiting to find thymio position
             if DO_KALMAN:
@@ -54,7 +53,9 @@ if __name__ == "__main__":
                 if global_navigation.find_thymio():
                     speed = little_thymio.get_sensors(sensor="wheels")
                     print("before update :", global_navigation.get_position_and_angle())
-                    position_update, position_variance, kidnapping = kalman_func(KF, global_navigation.get_position_and_angle(), speed)
+                    position_update, position_variance, kidnapping = kalman_func(KF,
+                                                                                 global_navigation.get_position_and_angle(),
+                                                                                 speed)
                     print("after update", position_update)
                     if kidnapping:
                         little_thymio.angry()
@@ -71,13 +72,9 @@ if __name__ == "__main__":
                     pass
                 little_thymio.set_new_position(global_navigation.get_position_and_angle())
             global_navigation.append_position_to_history()
-            global_navigation.show_image(True, True, True, True, True, estimate=position_update, probability=position_variance)
+            global_navigation.show_image(True, True, True, True, True, estimate=position_update,
+                                         probability=position_variance)
             little_thymio.set_new_goal(global_navigation.get_next_position())
-
-
-
-
-
 
         ####### astolfi controller ##########
         if MOVEMENT:
@@ -88,9 +85,6 @@ if __name__ == "__main__":
             little_thymio.be_happy()
 
         key = cv2.waitKey(20)
-        if key == 27: # exit on ESC
+        if key == 27:  # exit on ESC
             little_thymio.be_happy()
             break
-
-
-

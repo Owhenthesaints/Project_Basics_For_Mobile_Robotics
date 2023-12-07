@@ -1,15 +1,16 @@
 import time
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import pyvisgraph as vg
+
 from dependencies.helper_functions import convert_angle
 
 TRANSFORMED_IMAGE_NAME = "transformed image"
 NORMAL_IMAGE_NAME = "normal image"
 ANGLE_OFFSET = np.pi
 DEMO_DOUBLE_SCREEN_NAME = "annotated and regular image"
+
 
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
@@ -20,7 +21,7 @@ def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_gree
 
     # getting the mask image from the HSV image using threshold values
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-    #median = cv2.median
+    # median = cv2.median
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
 
@@ -265,7 +266,7 @@ def process_obstacles(contours):
         peri = cv2.arcLength(cnt, True)
         vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
         sides = len(vertices)
-        #print(sides)
+        # print(sides)
 
         if sides == 4:
             num_obstacles += 1
@@ -325,7 +326,7 @@ def process_background(image):
     (obstacle_contours, _) = cv2.findContours(processed_obstacles, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
 
-    #Display the processed grayscale mask using matplotlib
+    # Display the processed grayscale mask using matplotlib
     # plt.imshow(processed_obstacles, cmap='gray')
     # plt.title("goal")
     # plt.axis('off')
@@ -449,7 +450,8 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
     length = 50
     endpoint_x = int(robot_center[0] + length * np.cos((robot_angle)))
     endpoint_y = int(robot_center[1] + length * np.sin((robot_angle)))
-    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0), 2)
+    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0),
+                    2)
 
 
 def calibrateHSV(video_stream, CAMERA_ID=1):
@@ -492,7 +494,7 @@ def init_background(video_stream):
             # this might be needed because the transformation matrix isnt always that good
             transformation_matrix = perspective_transformation(image)
             if transformation_matrix is not None:
-                #print(transformation_matrix)
+                # print(transformation_matrix)
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
                 print("background not found")
@@ -519,6 +521,7 @@ def init_background(video_stream):
 
     return obstacle_vertices, goal_center, transformation_matrix
 
+
 def get_robot_pos_angle(image, QR_detector):
     robot_angle = None
     robot_center = None
@@ -540,33 +543,37 @@ def get_robot_pos_angle(image, QR_detector):
             angle_window = []  # Reset the window for the next set of frames
     return robot_angle, robot_center, qr_vertices
 
+
 def find_thymio_position_angle(triangle_contours):
-    
     triangle_contours = np.array(triangle_contours)
     triangle_side_lengths = np.array([[np.linalg.norm(triangle_contours[0] - triangle_contours[1])],
-                                    [np.linalg.norm(triangle_contours[1] - triangle_contours[2])],
-                                    [np.linalg.norm(triangle_contours[2] - triangle_contours[0])]])
+                                      [np.linalg.norm(triangle_contours[1] - triangle_contours[2])],
+                                      [np.linalg.norm(triangle_contours[2] - triangle_contours[0])]])
     # draw a line from middle of shortest side of triangle to the tip of the triangle
-    #print(triangle_side_lengths)
+    # print(triangle_side_lengths)
     shortest_side_index = np.argmin(triangle_side_lengths)
-    
+
     if shortest_side_index == 0:
         front = triangle_contours[2]
-        middle = np.array([(triangle_contours[0][0] + triangle_contours[1][0]) / 2, (triangle_contours[0][1] + triangle_contours[1][1]) / 2])
+        middle = np.array([(triangle_contours[0][0] + triangle_contours[1][0]) / 2,
+                           (triangle_contours[0][1] + triangle_contours[1][1]) / 2])
     elif shortest_side_index == 1:
         front = triangle_contours[0]
-        middle = np.array([(triangle_contours[1][0] + triangle_contours[2][0]) / 2, (triangle_contours[1][1] + triangle_contours[2][1]) / 2])
+        middle = np.array([(triangle_contours[1][0] + triangle_contours[2][0]) / 2,
+                           (triangle_contours[1][1] + triangle_contours[2][1]) / 2])
     else:
-        front = triangle_contours[1]  
-        middle = np.array([(triangle_contours[2][0] + triangle_contours[0][0]) / 2, (triangle_contours[2][1] + triangle_contours[0][1]) / 2])
+        front = triangle_contours[1]
+        middle = np.array([(triangle_contours[2][0] + triangle_contours[0][0]) / 2,
+                           (triangle_contours[2][1] + triangle_contours[0][1]) / 2])
 
     # find the center of the triangle
-    center = np.array((front+middle)/2)
-    
+    center = np.array((front + middle) / 2)
+
     # find the angle of the triangle
-    angle = np.arctan2(front[1]-middle[1], front[0]-middle[0])
-    
-    return center, angle  
+    angle = np.arctan2(front[1] - middle[1], front[0] - middle[0])
+
+    return center, angle
+
 
 class GlobalNav2:
     __image = None
@@ -577,7 +584,7 @@ class GlobalNav2:
     __last_robot_center = None
     __goal_center = None
     __robot_angle = None
-    __position_array : list[np.ndarray]= []
+    __position_array: list[np.ndarray] = []
 
     def __init__(self):
         # self.__CAMERA_ID = 0
@@ -594,13 +601,13 @@ class GlobalNav2:
         if detected:
             self.__get_warped_perspective_image()
         return detected
-    
+
     def find_thymio(self):
         print("finding thymio")
         # filter out red color to get triangle
         # Convert the frame from BGR to HSV
         self.__get_most_recent_image()
-        
+
         hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
@@ -614,10 +621,10 @@ class GlobalNav2:
         # Create a mask for the red color
         # kernel = np.ones((5, 5), np.uint8)
         mask = cv2.inRange(hsv, lower_red, upper_red)
-    
+
         # Find connected components with stats
         _, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
-        
+
         try:
             # Get the index of the connected component with the largest area
             largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1  # Skip the background component
@@ -626,12 +633,12 @@ class GlobalNav2:
             return False
         # Create a mask for the largest connected component
         largest_component_mask = (labels == largest_component_index).astype(np.uint8)
-        
+
         # kernel = (7, 7)
         # mask_dilation = cv2.dilate(largest_component_mask, kernel, iterations=1)
         # mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
-        #processed_mask = process_image(largest_component_mask, lower_red[0], lower_red[1], lower_red[2], upper_red[0], upper_red[1], upper_red[2])
-        
+        # processed_mask = process_image(largest_component_mask, lower_red[0], lower_red[1], lower_red[2], upper_red[0], upper_red[1], upper_red[2])
+
         # # # make triangle edges less sharp
         # sigma = 0
         # kernel = (7, 7)
@@ -643,7 +650,7 @@ class GlobalNav2:
         # erosion_mask = cv2.erode(dilate_mask, kernel, iterations=1)
         # canny_img = cv2.Canny(erosion_mask, lower_threshold, upper_threshold, apertureSize=aperture_size, L2gradient=True)
         # dilated_edges = cv2.dilate(canny_img, kernel, iterations=4)
-        
+
         # plt.imshow(largest_component_mask)
         # plt.axis('off')  # Turn off axis labels
         # plt.show()
@@ -655,7 +662,7 @@ class GlobalNav2:
             approx = cv2.approxPolyDP(contour, 0.03 * cv2.arcLength(contour, True), True)
             if len(approx) == 3:
                 cnt = np.squeeze(approx)
-                position, angle =  find_thymio_position_angle(cnt)
+                position, angle = find_thymio_position_angle(cnt)
                 angle = convert_angle(angle + ANGLE_OFFSET)
                 self._position = np.array([position[0], position[1], -angle])
                 # # Draw a bounding box around the detected triangle
@@ -666,19 +673,19 @@ class GlobalNav2:
             else:
                 print("cannot find thymio")
                 return False
-        
+
     def get_position_and_angle(self):
-        return self._position    
-        
+        return self._position
+
     def __get_warped_perspective_image(self):
         height, width, channels = self.__image.shape
         self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                               (width, height))
+                                                           (width, height))
 
     def calculate_global_navigation(self):
         if self.__get_most_recent_image() and self._position is not None:
             self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self._position,
-                                                   self.__goal_center)
+                                                     self.__goal_center)
 
     def get_on_goal(self):
         return self.__on_goal
@@ -686,37 +693,37 @@ class GlobalNav2:
     def override_position(self, position):
         self._position = position
 
-        
     def append_position_to_history(self):
         self.__position_array.append(self._position)
 
-        
-
-    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True, double_screen: bool = True, uncertainty: bool = False, estimate = 0, probability = 0):
+    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True,
+                   double_screen: bool = True, uncertainty: bool = False, estimate=0, probability=0):
         if self.__get_most_recent_image():
             if draw_path:
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
                                     self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
-            if trajectory and len(self.__position_array)!= 0:
+            if trajectory and len(self.__position_array) != 0:
                 purple_bgr = (255, 0, 255)
                 for position in self.__position_array:
-                    cv2.circle(self.__new_perspective_image, (int(position[0]), int(position[1])), 5, purple_bgr, -1)  # Red circles
- 
+                    cv2.circle(self.__new_perspective_image, (int(position[0]), int(position[1])), 5, purple_bgr,
+                               -1)  # Red circles
+
             if uncertainty:
                 pos = np.array(np.round(estimate[0:2]), dtype=int)
                 angle = estimate[2]
-                prob = np.array(np.round(np.sqrt(np.array([probability[1,1], probability[0,0]]))), dtype=int)
-                
+                prob = np.array(np.round(np.sqrt(np.array([probability[1, 1], probability[0, 0]]))), dtype=int)
+
                 # Using cv2.ellipse() method
                 # Draw a ellipse with red line borders of thickness of 2 px
-                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360, color=(255, 100, 0), thickness=2)
+                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360,
+                            color=(255, 100, 0), thickness=2)
 
             if transformed:
                 if self.__new_perspective_image is not None:
                     if double_screen:
                         annotated_and_regular = np.concatenate((self.__image, self.__new_perspective_image), axis=0)
-                        cv2.imshow(DEMO_DOUBLE_SCREEN_NAME,annotated_and_regular)
+                        cv2.imshow(DEMO_DOUBLE_SCREEN_NAME, annotated_and_regular)
                     else:
                         cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
                 else:
@@ -728,7 +735,8 @@ class GlobalNav2:
             return False
 
     def is_on_goal(self):
-        distance_to_goal = np.sqrt((self._position[0] - self.__goal_center[0])**2 + (self._position[1] - self.__goal_center[1])**2) 
+        distance_to_goal = np.sqrt(
+            (self._position[0] - self.__goal_center[0]) ** 2 + (self._position[1] - self.__goal_center[1]) ** 2)
         self.__on_goal = distance_to_goal < 20
 
     def get_next_position(self):
@@ -741,10 +749,11 @@ class GlobalNav2:
             return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         elif self.__shortest_path is not None:
             vg_point_next_pos = self.__shortest_path[1]
-            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])                       
+            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])
             vg_point_next_next_pos = self.__shortest_path[2]
             next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
-            next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1], next_next_pos_to_go[0] - next_pos_to_go[0])
+            next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1],
+                                    next_next_pos_to_go[0] - next_pos_to_go[0])
             next_angle = convert_angle(next_angle)
             return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         else:

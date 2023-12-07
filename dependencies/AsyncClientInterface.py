@@ -1,6 +1,6 @@
-from typing import Callable, Any
-import dependencies.constants_robot as cst
 from tdmclient import ClientAsync, aw
+
+import dependencies.constants_robot as cst
 
 
 class InvalidArgumentError(Exception):
@@ -37,10 +37,12 @@ class AsyncClientInterface:
         self.client = ClientAsync()
         self.node = aw(self.client.wait_for_node())
         aw(self.node.lock())
-        aw(self.node.compile("""call leds.prox.v(0, 0)\ncall leds.prox.h(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.temperature(0, 0)\ncall leds.top(0, 0, 0)\ncall leds.circle(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.buttons(0, 0, 0, 0)\ncall leds.sound(0)\ncall leds.rc(0)"""))
+        aw(self.node.compile(
+            """call leds.prox.v(0, 0)\ncall leds.prox.h(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.temperature(0, 0)
+            call leds.top(0, 0, 0)\ncall leds.circle(0, 0, 0, 0, 0, 0, 0, 0)\ncall leds.buttons(0, 0, 0, 0)
+            call leds.sound(0)\ncall leds.rc(0)"""))
         self._refl_calib = refl_calib
         self._delta_calib = delta_calib
-
 
     def sleep(self, seconds):
         aw(self.client.sleep(seconds))
@@ -149,9 +151,8 @@ class AsyncClientInterface:
                     self.node.v.leds.top[index] = rgb
             else:
                 raise TypeError("either did not input list or list was not of right length")
-            
-        self.node.flush()
 
+        self.node.flush()
 
     def get_sensor(self, sensor: str, calibrated: bool = False) -> list[int] | int | bool:
         """
@@ -204,8 +205,6 @@ class AsyncClientInterface:
                     return node_with_attr
             except AttributeError:
                 raise InvalidArgumentError("attribute was not found due to wrong input being put in")
-
-
 
     def __del__(self):
         aw(self.node.unlock())
