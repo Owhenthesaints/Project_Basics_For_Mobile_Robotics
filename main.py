@@ -26,18 +26,6 @@ if __name__ == "__main__":
     ########################################
     little_thymio = ThymioRobot()
 
-    #### TESTING
-
-    # while not global_navigation.find_thymio():
-    #     pass
-    # position = global_navigation.get_position_and_angle()
-    # print("current pos:", position)
-    # goal = np.array([position[0] - 100, position[1] + 100, 0])
-    # little_thymio.set_new_position(position)
-    # little_thymio.set_new_goal(goal)
-
-    #### END TESTING
-
     while little_thymio.is_not_happy:
 
         if LOCAL_AVOIDANCE:
