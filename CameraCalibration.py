@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 
 def calibrateHSV():
-    init_camera_QRdetector(CAMERA_ID)
+    init_camera_QRdetector(1)
     for i in range(100):
         image_detected, image = video_stream.read()
     if image_detected:

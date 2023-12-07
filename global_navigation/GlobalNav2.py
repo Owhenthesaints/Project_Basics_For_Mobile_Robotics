@@ -69,12 +69,7 @@ def perspective_transformation(image):
     # Initialize a list to store the centers of the detected objects
     centers = []
 
-    # Mask values of the object to be detected
-    # (min_blue, min_green, min_red) = (11, 61, 0)
-    # (max_blue, max_green, max_red) = (77, 255, 255)
-
-    # on Jiarui's computer
-    (min_blue, min_green, min_red) = (11, 61, 55)
+    (min_blue, min_green, min_red) = (11, 61, 0)
     (max_blue, max_green, max_red) = (77, 255, 255)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
@@ -369,6 +364,47 @@ def init_camera_QRdetector(camera_id):
         video_stream.read()
     return video_stream, QR_detector
 
+# Empty function
+def doNothing(x):
+    pass
+def find_thresh(image):
+    # creating a resizable window named Track Bars
+    cv2.namedWindow('Track Bars', cv2.WINDOW_NORMAL)
+    # creating track bars for gathering threshold values of red green and blue
+    cv2.createTrackbar('min_blue', 'Track Bars', 0, 255, doNothing)
+    cv2.createTrackbar('min_green', 'Track Bars', 0, 255, doNothing)
+    cv2.createTrackbar('min_red', 'Track Bars', 0, 255, doNothing)
+    cv2.createTrackbar('max_blue', 'Track Bars', 0, 255, doNothing)
+    cv2.createTrackbar('max_green', 'Track Bars', 0, 255, doNothing)
+    cv2.createTrackbar('max_red', 'Track Bars', 0, 255, doNothing)
+    resized_image = cv2.resize(image, (800, 626))
+    # converting into HSV color model
+    hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
+    # showing both resized and hsv image in named windows
+    # cv2.imshow('Base Image', resized_image)
+    # cv2.imshow('HSV Image', hsv_image)
+    # creating a loop to get the feedback of the changes in trackbars
+    while True:
+        # reading the trackbar values for thresholds
+        min_blue = cv2.getTrackbarPos('min_blue', 'Track Bars')
+        min_green = cv2.getTrackbarPos('min_green', 'Track Bars')
+        min_red = cv2.getTrackbarPos('min_red', 'Track Bars')
+        max_blue = cv2.getTrackbarPos('max_blue', 'Track Bars')
+        max_green = cv2.getTrackbarPos('max_green', 'Track Bars')
+        max_red = cv2.getTrackbarPos('max_red', 'Track Bars')
+        # using inrange function to turn on the image pixels where object threshold is matched
+        mask = cv2.inRange(hsv_image, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
+        # showing the mask image
+        cv2.imshow('Mask Image', mask)
+        # checking if q key is pressed to break out of loop
+        key = cv2.waitKey(25)
+        if key == ord('q'):
+            break
+    # printing the threshold values for usage in detection application
+    print(f'min_blue {min_blue}  min_green {min_green} min_red {min_red}')
+    print(f'max_blue {max_blue}  max_green {max_green} max_red {max_red}')
+    # destroying all windows
+    cv2.destroyAllWindows()
 
 def kill_camera(video_stream):
     video_stream.release()
@@ -407,6 +443,12 @@ def init_background(video_stream):
             print('background found', successInit)
 
     return obstacle_vertices, goal_center, transformation_matrix
+
+def calibrate_HSV(video_stream, CAMERA_ID=1):
+    init_camera_QRdetector(CAMERA_ID)
+    image_detected, image = video_stream.read()
+    if image_detected:
+        find_thresh(image)
 
 def find_thymio_position_angle(triangle_contours):
     triangle_contours = np.array(triangle_contours)
@@ -448,9 +490,7 @@ class GlobalNav2:
     __position_array: list[np.ndarray] = []
 
     def __init__(self):
-        # self.__CAMERA_ID = 0
-        # on Jiarui's computer
-        self.__CAMERA_ID = 1
+        self.__CAMERA_ID = 0
         self.__video_stream, self.QR_detector = init_camera_QRdetector(self.__CAMERA_ID)
         self.__obstacle_vertices, self.__goal_center, self.__transformation_matrix = init_background(
             self.__video_stream)
@@ -472,15 +512,10 @@ class GlobalNav2:
         hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
 
         # Define the range for red color in HSV
-        # lower_red = np.array([0, 158, 66])
-        # upper_red = np.array([18, 255, 255])
-
-        # on Jiarui's computer
-        lower_red = np.array([0, 158, 130])
-        upper_red = np.array([252, 255, 255])
+        lower_red = np.array([0, 158, 66])
+        upper_red = np.array([18, 255, 255])
 
         # Create a mask for the red color
-        # kernel = np.ones((5, 5), np.uint8)
         mask = cv2.inRange(hsv, lower_red, upper_red)
 
         # Find connected components with stats
