@@ -88,16 +88,16 @@ class ThymioRobot():
         if rho < self.__THRESHOLD:
             self.on_objective = True
             return
-        # we add np.pi to position[2] in order to adapt to alstofy referential
+        # we add np.pi to position[2] in order to adapt to the different astolfi referential
         alpha = convert_angle(-self._position[2] + np.pi + np.arctan2(-movement_vector[1], movement_vector[0]))
         beta = convert_angle(- self._position[2] - alpha + np.pi)
         forward_speed = self.__KAPPA_RHO * rho
-        turning_velocity = -(self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
+        turning_velocity = (self.__WHEEL_DISTANCE / 2) * (self.__KAPPA_ALPHA * alpha + self.__KAPPA_BETA * beta)
         if forward_speed > 150:
             turning_velocity *= 150 / forward_speed
             forward_speed = 150
 
         movement_array = [-turning_velocity + forward_speed, turning_velocity + forward_speed]
-        self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[1])),
-                                    right_motor=int(np.floor(movement_array[0])))
+        self.AsyncClient.set_motors(left_motor=int(np.floor(movement_array[0])),
+                                    right_motor=int(np.floor(movement_array[1])))
         self.on_objective = False
