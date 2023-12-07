@@ -409,7 +409,6 @@ def find_thymio_position_angle(triangle_contours):
                                       [np.linalg.norm(triangle_contours[1] - triangle_contours[2])],
                                       [np.linalg.norm(triangle_contours[2] - triangle_contours[0])]])
     # draw a line from middle of shortest side of triangle to the tip of the triangle
-    # print(triangle_side_lengths)
     shortest_side_index = np.argmin(triangle_side_lengths)
 
     if shortest_side_index == 0:
