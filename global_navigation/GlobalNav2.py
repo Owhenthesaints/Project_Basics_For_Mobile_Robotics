@@ -550,18 +550,8 @@ def draw_adjacency_graph(obstacle_vertices, robot_position, goal_position, img):
             all_vertices.append(vg.Point(point[0], point[1]))
         polygons.append(polygon)
 
-        obstacle = []
-        # creating a list of edges for the obstacle
-        for i, vertex in enumerate(obstacle):
-            x, y = vertex[0]
-            obstacle.append((x, y))
-
-            # Calculate the index of the next vertex in the list (wrapping around to the first vertex if it's the last one)
-            next_index = 0 if i == len(obstacle) - 1 else i + 1
-            next_vertex = obstacle[next_index][0]
-
-            # Append the current edge to the list of edges
-            edges.append(((x, y), (next_vertex[0], next_vertex[1])))
+        num_vertices = len(obstacle)
+        edges = [(obstacle[i], obstacle[(i + 1) % num_vertices]) for i in range(num_vertices)]
 
         obstacle_edges.append(edges)  # Append the edges to the list      
 
