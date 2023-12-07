@@ -22,8 +22,6 @@ class AsyncClientInterface:
     PROX_GROUND_REFLECTED = "prox.ground.reflected"
     MIC_INTENSITY = "mic.intensity"
     LEDS_TOP = "leds.top"
-    __right_motor_value: int = 0
-    __left_motor_value: int = 0
     _delta_calib = 1
     _refl_calib = 1
 

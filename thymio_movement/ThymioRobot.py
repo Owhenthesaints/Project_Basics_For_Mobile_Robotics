@@ -62,6 +62,7 @@ class ThymioRobot():
         :return: left then right wheel or horizontal array of sensors
         """
         if sensor == "horizontal_sensor":
+            # We slice the array to only keep the forward sensors
             return np.array(self.AsyncClient.get_sensor(self.AsyncClient.PROX_HORIZONTAL_VALUES))[0:5]
         elif sensor == "wheels":
             return np.array([self.AsyncClient.get_sensor(self.AsyncClient.LEFT_SPEED),
