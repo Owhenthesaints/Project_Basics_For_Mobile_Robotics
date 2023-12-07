@@ -1,5 +1,5 @@
 import time
-
+import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import pyvisgraph as vg
@@ -251,7 +251,6 @@ def illustrate_scaling(scaled_contour_image, contours, scaled = False):
         # print(sides)
     
         if sides == 4:
-            num_obstacles += 1
             # print('shape',shape)
             minimum_distance = 10
             if scaled:
@@ -271,18 +270,19 @@ def illustrate_scaling(scaled_contour_image, contours, scaled = False):
 
                 # Append the current edge to the list of edges
                 edges.append(((x, y), (next_vertex[0], next_vertex[1])))
+                # drawing the scaled contour
+                if scaled:
+                    color = (255, 0, 0)
+                    cv2.circle(scaled_contour_image, (x,y), 5, (255, 0, 0), 10, -1)
+                else:
+                    color = (0, 0, 0)
+                cv2.line(scaled_contour_image, (x,y), (next_vertex[0], next_vertex[1]), color, 3)
 
             obstacle_vertices.append(obstacle)  # Append the vertices to the list
             obstacle_edges.append(edges)  # Append the edges to the list          
 
     
-    # drawing the scaled contour
-    if scaled:
-        color = (255, 255, 0)
-        cv2.circle(scaled_contour_image, (x,y), 5, (255, 0, 0), 10, -1)
-    else:
-        color = (255, 0, 255)
-    cv2.line(scaled_contour_image, (x,y), (next_vertex[0], next_vertex[1]), color, 3)
+    
 
 
 def process_obstacles(contours):
@@ -352,14 +352,15 @@ def process_background(image):
     (obstacle_contours, _) = cv2.findContours(processed_obstacles, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
     
-    # visualize scaling contour
-    height, width = image.size
-    scaled_contour_img = np.ones((height, width, 3), dtype = np.u8int)
-    illustrate_scaling(scaled_contour_img, obstacle_contours, False)
-    illustrate_scaling(scaled_contour_img, obstacle_contours, True)
+    # # visualize scaling contour
+    # height, width, _ = image.shape
+    # scaled_contour_img = np.ones((height, width, 3), dtype = np.uint8) * 255
+    # illustrate_scaling(scaled_contour_img, obstacle_contours, False)
+    # illustrate_scaling(scaled_contour_img, obstacle_contours, True)
     
-    plt.imshow(scaled_contour_img)
-    plt.title("Plot of original contour and scaled contour")
+    # plt.imshow(scaled_contour_img)
+    # plt.title("Plot of original contour and scaled contour")
+    # plt.show()
 
     # Display the processed grayscale mask using matplotlib
     # plt.imshow(processed_obstacles, cmap='gray')
@@ -456,86 +457,6 @@ def kill_camera(video_stream):
 
 def convertVG_to_np(point):
     return np.array([point.x, point.y], dtype = int)
-
-def illustrate_adjacency_graph(obstacle_vertices, robot_position, goal_position, img):
-    
-    polygons = []
-    all_vertices = []
-    obstacle_edges = []
-    for obstacle in obstacle_vertices:
-        print(obstacle)
-        polygon = []
-        for point in obstacle:
-            polygon.append(vg.Point(point[0], point[1]))
-            all_vertices.append(vg.Point(point[0], point[1]))
-        polygons.append(polygon)
-
-        num_vertices = len(obstacle)
-        edges = [(obstacle[i], obstacle[(i + 1) % num_vertices]) for i in range(num_vertices)]
-
-        obstacle_edges.append(edges)  # Append the edges to the list      
-
-    # building the graph
-    graph = vg.VisGraph()
-    graph.build(polygons)
-
-    startPosition = vg.Point(robot_position[0],robot_position[1])
-    endPosition = vg.Point(goal_position[0], goal_position[1])
-
-    # adjacency graph for all the vertices
-    vertex_color = np.array([0, 100, 100])
-    for vertex in all_vertices:
-        print(vertex)
-        visible_points = (graph.find_visible(vertex))
-        #vertex_color = new_color(vertex_color)
-        #print(tuple(vertex_color))
-        for point in visible_points:
-            np_vertex = convertVG_to_np(vertex)
-            visible_point = convertVG_to_np(point)
-            cv2.line(img, np_vertex, visible_point, (255, 100, 30), 2)
-
-    # drawing the original triangles
-    # Plot the lines for each triangle
-    for edges in obstacle_edges:
-        for edge in edges:
-            cv2.line(img, edge[0], edge[1], (0, 0, 255), 2)
-
-    cv2.circle(img, (robot_position[0], robot_position[1]), 5, (0,0,0), -1)
-    # finding visible points from the start position
-    print("start position:", startPosition)
-    start_visible_points = (graph.find_visible(startPosition))
-    print(start_visible_points)
-    for point in start_visible_points:
-            np_vertex = convertVG_to_np(vertex)
-            visible_point = convertVG_to_np(point)
-            cv2.line(img, (robot_position[0], robot_position[1]), visible_point, (255, 100, 30), 2)
-
-    # finding visible points from the end position
-    end_visible_points = (graph.find_visible(endPosition))
-    for point in end_visible_points:
-            np_vertex = convertVG_to_np(vertex)
-            visible_point = convertVG_to_np(point)
-            cv2.line(img, (goal_position[0], goal_position[1]), visible_point, (255, 100, 30), 2)
-
-    cv2.circle(img, (goal_position[0], goal_position[1]), 5, (0,0,0), -1)
-    return graph
-
-def illustrate_shortest_path(graph, robot_position, goal_position, img):
-    
-    edgelist = []
-    startPosition = vg.Point(robot_position[0],robot_position[1])
-    endPosition = vg.Point(goal_position[0], goal_position[1])
-    shortestPath = graph.shortest_path(startPosition, endPosition)
-    
-    # drawing the path on image
-    for i, node in enumerate(shortestPath[:-1]):
-        edgelist.append((shortestPath[i], shortestPath[i + 1]))
-        
-    color = (255, 0, 255)
-    thickness = 5
-    for i, edge in enumerate(edgelist):
-    #print(int(edgelist[i][0].x), int(edgelist[i][0].y))
-        cv2.line(img, (int(edgelist[i][0].x), int(edgelist[i][0].y)), (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
 
 def init_background(video_stream):
     successInit = False
@@ -700,13 +621,6 @@ class GlobalNav2:
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
                                     self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
                 
-                ## CODE TO DRAW ADJACENCY GRAPH
-                height, width = self.__new_perspective_image.shape
-                dummyImage =  np.ones((height, width, 3), dtype = np.u8int)
-                graph = illustrate_adjacency_graph(self.__obstacle_vertices, self.__position[0:2], self.__goal_center, dummyImage)
-                illustrate_shortest_path(graph, self.__position[0:2], self.__goal_center, dummyImage)
-                plt.imshow(dummyImage)
-                plt.title("Adjacency Graph with shortest path")
             if trajectory and len(self.__position_array) != 0:
                 purple_bgr = (255, 0, 255)
                 for position in self.__position_array:
