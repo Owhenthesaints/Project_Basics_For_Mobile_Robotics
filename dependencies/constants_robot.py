@@ -38,7 +38,7 @@ QRW = SPEED_VAR*5
 
 # thresholds for deciding kidnapping
 DIST_TRESHOLD = 100
-ANGLE_TRESHOLD = np.pi/4
+ANGLE_TRESHOLD = np.pi/3
 
 ####################################  local navigation  ##########
 LOCAL_NAV_SWITCH = 1000

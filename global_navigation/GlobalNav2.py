@@ -204,37 +204,21 @@ def detect_shape(cnt):  # Function to determine type of polygon on basis of numb
     return shape
 
 
-# INPUTS: a contour, and minimum distance in pixels needed to scale the contour
-def scale_contour(original_contour, desired_min_distance):
+# INPUTS: a contour
+def scale_contour(original_contour):
     # Get the bounding rectangle around the shape
     x, y, w, h = cv2.boundingRect(original_contour)
 
     # Calculate the center of the bounding rectangle
     center = ((x + w // 2), (y + h // 2))
 
-    scaled_adequate = False
+    
     scale_factor = 1.7
 
-    while (not scaled_adequate):
-        # Scale each point of the contour relative to the center
-        scaled_contour = np.array([[(point[0][0] - center[0]) * scale_factor + center[0],
+    
+    scaled_contour = np.array([[(point[0][0] - center[0]) * scale_factor + center[0],
                                     (point[0][1] - center[1]) * scale_factor + center[1]]
                                    for point in original_contour], dtype=np.int32)
-        # checking if contour is scaled enough
-        min_distance = float('inf')
-
-        # print(original_contour)
-        for point in scaled_contour:
-            point = tuple(float(coord) for coord in point)
-            distance = cv2.pointPolygonTest(original_contour, point, True)
-            min_distance = min(min_distance, abs(distance))
-        # print(min_distance)
-        if (min_distance < desired_min_distance):
-            scale_factor += 0.01
-        #             print(scale_factor)
-        else:
-            scaled_adequate = True
-            print("Adequate Scaling achieved for obstacles")
 
     return scaled_contour
 
@@ -251,10 +235,8 @@ def illustrate_scaling(scaled_contour_image, contours, scaled = False):
         # print(sides)
     
         if sides == 4:
-            # print('shape',shape)
-            minimum_distance = 10
             if scaled:
-                cnt = scale_contour(cnt, minimum_distance)
+                cnt = scale_contour(cnt)
 
             vertices = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
             obstacle = []  # Store vertices for each obstacle
@@ -298,8 +280,7 @@ def process_obstacles(contours):
     
         if sides == 4:
             num_obstacles += 1
-            minimum_distance = 10
-            cnt = scale_contour(cnt, minimum_distance)
+            cnt = scale_contour(cnt)
 
             vertices = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
             obstacle = []  # Store vertices for each obstacle
@@ -353,6 +334,7 @@ def process_background(image):
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
     
     # # visualize scaling contour
+    # # Code used to get graphs for the report
     # height, width, _ = image.shape
     # scaled_contour_img = np.ones((height, width, 3), dtype = np.uint8) * 255
     # illustrate_scaling(scaled_contour_img, obstacle_contours, False)
