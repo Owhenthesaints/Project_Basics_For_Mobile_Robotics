@@ -109,59 +109,6 @@ def perspective_transformation(image):
         return transformation_matrix
 
 
-# Empty function
-def doNothing(x):
-    pass
-
-
-def find_thresh(image):
-    # creating a resizable window named Track Bars
-    cv2.namedWindow('Track Bars', cv2.WINDOW_NORMAL)
-
-    # creating track bars for gathering threshold values of red green and blue
-    cv2.createTrackbar('min_blue', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('min_green', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('min_red', 'Track Bars', 0, 255, doNothing)
-
-    cv2.createTrackbar('max_blue', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('max_green', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('max_red', 'Track Bars', 0, 255, doNothing)
-
-    resized_image = cv2.resize(image, (800, 626))
-    # converting into HSV color model
-    hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
-
-    # showing both resized and hsv image in named windows
-    # cv2.imshow('Base Image', resized_image)
-    # cv2.imshow('HSV Image', hsv_image)
-
-    # creating a loop to get the feedback of the changes in trackbars
-    while True:
-        # reading the trackbar values for thresholds
-        min_blue = cv2.getTrackbarPos('min_blue', 'Track Bars')
-        min_green = cv2.getTrackbarPos('min_green', 'Track Bars')
-        min_red = cv2.getTrackbarPos('min_red', 'Track Bars')
-
-        max_blue = cv2.getTrackbarPos('max_blue', 'Track Bars')
-        max_green = cv2.getTrackbarPos('max_green', 'Track Bars')
-        max_red = cv2.getTrackbarPos('max_red', 'Track Bars')
-
-        # using inrange function to turn on the image pixels where object threshold is matched
-        mask = cv2.inRange(hsv_image, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-        # showing the mask image
-        cv2.imshow('Mask Image', mask)
-        # checking if q key is pressed to break out of loop
-        key = cv2.waitKey(25)
-        if key == ord('q'):
-            break
-
-    # printing the threshold values for usage in detection application
-    print(f'min_blue {min_blue}  min_green {min_green} min_red {min_red}')
-    print(f'max_blue {max_blue}  max_green {max_green} max_red {max_red}')
-    # destroying all windows
-    cv2.destroyAllWindows()
-
-
 def orientation_angle(points):
     points_np = np.array(points[0], dtype=np.float32)
 
@@ -263,17 +210,13 @@ def illustrate_scaling(scaled_contour_image, contours, scaled = False):
             obstacle_vertices.append(obstacle)  # Append the vertices to the list
             obstacle_edges.append(edges)  # Append the edges to the list          
 
-    
-    
-
-
 def process_obstacles(contours):
-    obstacle_vertices = []  # List to store vertices for each triangle
-    obstacle_edges = []  # List to store lines for each triangle
+    obstacle_vertices = []  # List to store vertices for each obstacle
+    obstacle_edges = []  # List to store lines for each obstacle
     num_obstacles = 0
 
     for cnt in contours:
-        # shape = detectShape(cnt)
+        #shape = detectShape(cnt)
         peri = cv2.arcLength(cnt, True)
         vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
         sides = len(vertices)
@@ -306,9 +249,11 @@ def process_goal(contours):
     goal_center = None
 
     for cnt in contours:
-        shape = detect_shape(cnt)
+        peri = cv2.arcLength(cnt, True)
+        vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+        sides = len(vertices)
         # print('shape',shape)
-        if shape == 'octagon':
+        if sides == 8:
             # Store circle information
             (goal_center, radius) = cv2.minEnclosingCircle(cnt)
             goal_center = (int(goal_center[0]), int(goal_center[1]))
@@ -397,7 +342,6 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
 
     # drawing the optimal path using edges
     for i, edge in enumerate(edgelist):
-        # print(int(edgelist[i][0].x), int(edgelist[i][0].y))
         # if the robot is already on the path of an edge, draw from that point
         cv2.line(camera_image, (int(edgelist[i][0].x), int(edgelist[i][0].y)),
                  (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
@@ -412,13 +356,6 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
     endpoint_x = int(robot_center[0] + length * np.cos((robot_angle)))
     endpoint_y = int(robot_center[1] + length * np.sin((robot_angle)))
     cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0), 2)
-
-def calibrate_HSV(video_stream, CAMERA_ID=1):
-    init_camera_QRdetector(CAMERA_ID)
-    image_detected, image = video_stream.read()
-    if image_detected:
-        find_thresh(image)
-
 
 # function initializes the webcam
 def init_camera_QRdetector(camera_id):
