@@ -395,36 +395,6 @@ def get_shortest_path(shape_vertices, rob_pos, goal_pos):
     # print(shortestPath)
     return shortestPath
 
-# INPUTS: the shortestPath: a vector of vg.Point vertices
-# shape_vertices: the vertices of expanded shapes
-# pathImage: the image to draw the path
-def draw_path_graph(shape_vertices, shortestPath, pathImage):
-    # drawing points for each expanded vertex in the shape
-    for vertices in shape_vertices:
-        for i, vertex in enumerate(vertices):
-            x = vertex[0]
-            y = vertex[1]
-            cv2.circle(pathImage, (x, y), 5, (255, 0, 0), -1)
-
-            # creating a list of edges to store path into
-    edgelist = []
-    for i, node in enumerate(shortestPath[:-1]):
-        edgelist.append((shortestPath[i], shortestPath[i + 1]))
-
-    color = (0, 255, 255)
-    thickness = 3
-    for i, edge in enumerate(edgelist):
-        # print(int(edgelist[i][0].x), int(edgelist[i][0].y))
-        # transformedEdge = cv2.perspectiveTransform(int(edgelist[i][0].x), int(edgelist[i][0].y))
-        cv2.line(pathImage, (int(edgelist[i][0].x), int(edgelist[i][0].y)),
-                 (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
-
-    # drawing start and goal positions as circles
-    goal_location = shortestPath[-1]
-    robot_location = shortestPath[0]
-    cv2.circle(pathImage, (int(goal_location.x), int(goal_location.y)), 15, (255, 0, 0), 1)
-    cv2.circle(pathImage, (int(robot_location.x), int(robot_location.y)), 15, (0, 0, 255), 1)
-
 
 def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_center, robot_angle):
     # drawing the expanded_vertices
@@ -458,9 +428,7 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
     length = 50
     endpoint_x = int(robot_center[0] + length * np.cos((robot_angle)))
     endpoint_y = int(robot_center[1] + length * np.sin((robot_angle)))
-    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0),
-                    2)
-
+    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0), 2)
 
 def calibrate_HSV(video_stream, CAMERA_ID=1):
     init_camera_QRdetector(CAMERA_ID)
@@ -589,17 +557,6 @@ def init_background(video_stream):
             else:
                 print("background not found")
                 continue
-                #             plt.imshow(new_perspective_image)
-                #             plt.title("new perspective")
-                #             plt.show()
-                #                 obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(image_initial)
-                #                 if (num_obstacles != 2):
-                #                     continue
-                #                 print("here", obstacle_vertices)
-                #                 obstacle_vertices = np.array(obstacle_vertices, dtype=float)
-                #                 obstacle_vertices = cv2.perspectiveTransform(obstacle_vertices.reshape(-1, 1, 2), transformation_matrix)
-                #                 obstacle_vertices = obstacle_vertices.reshape(1, 8, 2)
-                #                 print(obstacle_vertices)
 
             obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(new_perspective_image)
             print('vertices', obstacle_vertices)
@@ -610,29 +567,6 @@ def init_background(video_stream):
             print('background found', successInit)
 
     return obstacle_vertices, goal_center, transformation_matrix
-
-
-def get_robot_pos_angle(image, QR_detector):
-    robot_angle = None
-    robot_center = None
-    qr_vertices = None
-    window_size = 5
-    QR_detected, qr_vertices, _ = QR_detector.detectAndDecode(image)
-    if QR_detected:
-        # qr_vertices = cv2.perspectiveTransform(qr_vertices.reshape(-1, 1, 2), transformation_matrix)
-        # qr_vertices = qr_vertices.reshape(1, 4, 2)
-
-        robot_angle, robot_center = orientation_angle(qr_vertices)
-        print('robot center', robot_center)
-        # print(f"Individual Angle: {angle} degrees")
-        angle_window = []
-        angle_window.append(robot_angle)
-        if len(angle_window) == window_size:
-            mean_angle = calculate_mean_angle(angle_window)
-            # print(f"Mean Angle over {window_size} frames: {mean_angle} degrees")
-            angle_window = []  # Reset the window for the next set of frames
-    return robot_angle, robot_center, qr_vertices
-
 
 def find_thymio_position_angle(triangle_contours):
     triangle_contours = np.array(triangle_contours)
@@ -667,13 +601,10 @@ def find_thymio_position_angle(triangle_contours):
 
 class GlobalNav2:
     __image = None
-    __qr_vertices = None
     __new_perspective_image = None
     __shortest_path = None
     __on_goal = False
-    __last_robot_center = None
     __goal_center = None
-    __robot_angle = None
     __position_array: list[np.ndarray] = []
 
     def __init__(self):
