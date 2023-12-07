@@ -489,7 +489,7 @@ def kill_camera(video_stream):
 def convertVG_to_np(point):
     return np.array([point.x, point.y], dtype = int)
 
-def draw_adjacency_graph(obstacle_vertices, robot_position, goal_position, img):
+def illustrate_adjacency_graph(obstacle_vertices, robot_position, goal_position, img):
     
     polygons = []
     all_vertices = []
@@ -551,6 +551,23 @@ def draw_adjacency_graph(obstacle_vertices, robot_position, goal_position, img):
 
     cv2.circle(img, (goal_position[0], goal_position[1]), 5, (0,0,0), -1)
     return graph
+
+def illustrate_shortest_path(graph, robot_position, goal_position, img):
+    
+    edgelist = []
+    startPosition = vg.Point(robot_position[0],robot_position[1])
+    endPosition = vg.Point(goal_position[0], goal_position[1])
+    shortestPath = graph.shortest_path(startPosition, endPosition)
+    
+    # drawing the path on image
+    for i, node in enumerate(shortestPath[:-1]):
+        edgelist.append((shortestPath[i], shortestPath[i + 1]))
+        
+    color = (255, 0, 255)
+    thickness = 5
+    for i, edge in enumerate(edgelist):
+    #print(int(edgelist[i][0].x), int(edgelist[i][0].y))
+        cv2.line(img, (int(edgelist[i][0].x), int(edgelist[i][0].y)), (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
 
 def init_background(video_stream):
     successInit = False
@@ -751,6 +768,14 @@ class GlobalNav2:
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
                                     self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
+                
+                ## CODE TO DRAW ADJACENCY GRAPH
+                height, width = self.__new_perspective_image.shape
+                dummyImage =  np.ones((height, width, 3), dtype = np.u8int)
+                graph = illustrate_adjacency_graph(self.__obstacle_vertices, self.__position[0:2], self.__goal_center, dummyImage)
+                illustrate_shortest_path(graph, self.__position[0:2], self.__goal_center, dummyImage)
+                plt.imshow(dummyImage)
+                plt.title("Adjacency Graph with shortest path")
             if trajectory and len(self.__position_array) != 0:
                 purple_bgr = (255, 0, 255)
                 for position in self.__position_array:
