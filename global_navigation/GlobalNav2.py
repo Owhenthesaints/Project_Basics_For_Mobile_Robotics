@@ -11,6 +11,13 @@ NORMAL_IMAGE_NAME = "normal image"
 ANGLE_OFFSET = np.pi
 DEMO_DOUBLE_SCREEN_NAME = "annotated and regular image"
 
+####################### CODE TO HELP VISUALIZE OUTPUT ##############################
+    #     #Display the image using matplotlib
+    #     plt.imshow(mask)
+    #     plt.title("mask")
+    #     plt.axis('off')  # Turn off axis labels
+    #     plt.show()
+####################################################################################
 
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
@@ -21,15 +28,8 @@ def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_gree
 
     # getting the mask image from the HSV image using threshold values
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-    # median = cv2.median
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
-
-    # Display the image using matplotlib
-    # plt.imshow(mask_erosion)
-    # plt.title("mask green")
-    # plt.axis('off')  # Turn off axis labels
-    # plt.show()
 
     return mask_erosion
 
@@ -45,23 +45,12 @@ def process_image(image, min_blue, min_green, min_red, max_blue, max_green, max_
 
     # getting the mask image from the HSV image using threshold values
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-    #     #Display the image using matplotlib
-    #     plt.imshow(mask)
-    #     plt.title("mask")
-    #     plt.axis('off')  # Turn off axis labels
-    #     plt.show()
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
     inverted_image = cv2.bitwise_not(mask_erosion)
     med_img = cv2.medianBlur(inverted_image, kernel_size)
     canny_img = cv2.Canny(med_img, lower_threshold, upper_threshold, apertureSize=aperture_size, L2gradient=True)
     dilated_edges = cv2.dilate(canny_img, kernel, iterations=1)
-
-    #     #Display the image using matplotlib
-    #     plt.imshow(dilated_edges)
-    #     plt.title("mask")
-    #     plt.axis('off')  # Turn off axis labels
-    #     plt.show()
 
     return dilated_edges
 
@@ -90,10 +79,6 @@ def perspective_transformation(image):
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
-    # plt.imshow(processed_mask)
-    # plt.axis('off')  # Turn off axis labels
-    # plt.show()
-
     # extracting the contours of the object
     contours, _ = cv2.findContours(processed_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
@@ -102,8 +87,6 @@ def perspective_transformation(image):
 
     # Take the top 4 contours
     top_contours = contours[:4]
-
-    # print('number of contours', len(top_contours))
 
     # Extract the 4 biggest contours wich are not having the same center
     for contour in top_contours:
@@ -204,7 +187,7 @@ def calculate_mean_angle(angle_list):
     return sum(angle_list) / len(angle_list) if len(angle_list) > 0 else 0.0
 
 
-def detectShape(cnt):  # Function to determine type of polygon on basis of number of sides
+def detect_shape(cnt):  # Function to determine type of polygon on basis of number of sides
     shape = 'unknown'
     peri = cv2.arcLength(cnt, True)
     vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -312,11 +295,9 @@ def process_obstacles(contours):
         peri = cv2.arcLength(cnt, True)
         vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
         sides = len(vertices)
-        # print(sides)
     
         if sides == 4:
             num_obstacles += 1
-            # print('shape',shape)
             minimum_distance = 10
             cnt = scale_contour(cnt, minimum_distance)
 
@@ -344,7 +325,7 @@ def process_goal(contours):
     goal_center = None
 
     for cnt in contours:
-        shape = detectShape(cnt)
+        shape = detect_shape(cnt)
         # print('shape',shape)
         if shape == 'octagon':
             # Store circle information
@@ -356,7 +337,6 @@ def process_goal(contours):
 
 
 def process_background(image):
-    # Scale_factor
 
     # Defining the the RGB threshold values for the obstacles
     (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 0)
@@ -371,7 +351,6 @@ def process_background(image):
                                         max_green_obst, max_red_obst)
     (obstacle_contours, _) = cv2.findContours(processed_obstacles, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
-    
     
     # visualize scaling contour
     height, width = image.size
@@ -393,12 +372,6 @@ def process_background(image):
                                    max_red_goal)
     (goal_contours, _) = cv2.findContours(processed_goal, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     goal_center = process_goal(goal_contours)
-
-    # Display the processed grayscale mask using matplotlib
-    # plt.imshow(processed_goal, cmap='gray')
-    # plt.title("goal")
-    # plt.axis('off')
-    # plt.show()
 
     return obstacle_vertices, obstacle_edges, num_obstacles, goal_center
 
@@ -422,31 +395,10 @@ def get_shortest_path(shape_vertices, rob_pos, goal_pos):
     # print(shortestPath)
     return shortestPath
 
-
-# INPUTS: vertices of obstacles, the robot position, goal position
-def get_shortest_path(shape_vertices, Rob_pos, Goal_pos):
-    polygons = []
-    for shape in shape_vertices:
-        polygon = []
-        for point in shape:
-            polygon.append(vg.Point(point[0], point[1]))
-        polygons.append(polygon)
-
-    graph = vg.VisGraph()
-    graph.build(polygons)
-
-    startPosition = vg.Point(Rob_pos[0], Rob_pos[1])
-    endPosition = vg.Point(Goal_pos[0], Goal_pos[1])
-
-    shortestPath = graph.shortest_path(startPosition, endPosition)
-    # print(shortestPath)
-    return shortestPath
-
-
 # INPUTS: the shortestPath: a vector of vg.Point vertices
 # shape_vertices: the vertices of expanded shapes
 # pathImage: the image to draw the path
-def drawPathGraph(shape_vertices, shortestPath, pathImage):
+def draw_path_graph(shape_vertices, shortestPath, pathImage):
     # drawing points for each expanded vertex in the shape
     for vertices in shape_vertices:
         for i, vertex in enumerate(vertices):
@@ -510,7 +462,7 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
                     2)
 
 
-def calibrateHSV(video_stream, CAMERA_ID=1):
+def calibrate_HSV(video_stream, CAMERA_ID=1):
     init_camera_QRdetector(CAMERA_ID)
     image_detected, image = video_stream.read()
     if image_detected:
