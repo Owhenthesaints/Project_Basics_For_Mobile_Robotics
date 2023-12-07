@@ -135,9 +135,6 @@ class AsyncClientInterface:
         A function that enables you to set sensors through the node.set_variables method the leds expect values between 0 and 32
         :param sensor: input your sensor
             - 'leds_top': expects three rgb values
-            - 'leds_bottom_left': expects r, g, b values
-            - 'leds_bottom_right': expects r, g, b values
-            - 'leds_circle': expects 8 values 1 or 0
 
         :param value: a list or an array containing the values you want to output
         """
