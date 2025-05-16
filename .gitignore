@@ -250,3 +250,4 @@ fabric.properties
 *.vsix
 
 /Test
+.idea/

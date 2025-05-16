@@ -1,13 +1,23 @@
 import time
-
-import cv2
 import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import pyvisgraph as vg
 
+from dependencies.helper_functions import convert_angle
+
 TRANSFORMED_IMAGE_NAME = "transformed image"
 NORMAL_IMAGE_NAME = "normal image"
+ANGLE_OFFSET = np.pi
+DEMO_DOUBLE_SCREEN_NAME = "annotated and regular image"
 
+####################### CODE TO HELP VISUALIZE OUTPUT ##############################
+    #     #Display the image using matplotlib
+    #     plt.imshow(mask)
+    #     plt.title("mask")
+    #     plt.axis('off')  # Turn off axis labels
+    #     plt.show()
+####################################################################################
 
 def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red, kernel_size=5):
     # Taking a matrix of size 5 as the kernel
@@ -20,12 +30,6 @@ def process_Green_square(image, min_blue, min_green, min_red, max_blue, max_gree
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
-
-    # Display the image using matplotlib
-    # plt.imshow(mask_erosion)
-    # plt.title("mask green")
-    # plt.axis('off')  # Turn off axis labels
-    # plt.show()
 
     return mask_erosion
 
@@ -41,23 +45,12 @@ def process_image(image, min_blue, min_green, min_red, max_blue, max_green, max_
 
     # getting the mask image from the HSV image using threshold values
     mask = cv2.inRange(hsv_frame, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-    #     #Display the image using matplotlib
-    #     plt.imshow(mask)
-    #     plt.title("mask")
-    #     plt.axis('off')  # Turn off axis labels
-    #     plt.show()
     mask_dilation = cv2.dilate(mask, kernel, iterations=1)
     mask_erosion = cv2.erode(mask_dilation, kernel, iterations=1)
     inverted_image = cv2.bitwise_not(mask_erosion)
     med_img = cv2.medianBlur(inverted_image, kernel_size)
     canny_img = cv2.Canny(med_img, lower_threshold, upper_threshold, apertureSize=aperture_size, L2gradient=True)
     dilated_edges = cv2.dilate(canny_img, kernel, iterations=1)
-
-    #     #Display the image using matplotlib
-    #     plt.imshow(dilated_edges)
-    #     plt.title("mask")
-    #     plt.axis('off')  # Turn off axis labels
-    #     plt.show()
 
     return dilated_edges
 
@@ -76,9 +69,8 @@ def perspective_transformation(image):
     # Initialize a list to store the centers of the detected objects
     centers = []
 
-    # Mask values of the object to be detected
-    (min_blue, min_green, min_red) = (0, 249, 85)
-    (max_blue, max_green, max_red) = (50, 255, 153)
+    (min_blue, min_green, min_red) = (11, 61, 0)
+    (max_blue, max_green, max_red) = (77, 255, 255)
 
     processed_mask = process_Green_square(image, min_blue, min_green, min_red, max_blue, max_green, max_red)
 
@@ -90,8 +82,6 @@ def perspective_transformation(image):
 
     # Take the top 4 contours
     top_contours = contours[:4]
-
-    # print('number of contours', len(top_contours))
 
     # Extract the 4 biggest contours wich are not having the same center
     for contour in top_contours:
@@ -105,65 +95,13 @@ def perspective_transformation(image):
 
     if len(centers) == 4:
         center_points = np.float32(centers).reshape(-1, 1, 2)
-        transformation_matrix = cv2.getPerspectiveTransform(center_points, dest_corners)
+        transformation_matrix = np.array(cv2.getPerspectiveTransform(center_points, dest_corners)).astype(np.float32)
+        print("transformationMatrix: ", transformation_matrix)
         return transformation_matrix
     else:
         # Return the initial image if not enough contours are detected
         transformation_matrix = None
         return transformation_matrix
-
-
-# Empty function
-def doNothing(x):
-    pass
-
-
-def find_thresh(image):
-    # creating a resizable window named Track Bars
-    cv2.namedWindow('Track Bars', cv2.WINDOW_NORMAL)
-
-    # creating track bars for gathering threshold values of red green and blue
-    cv2.createTrackbar('min_blue', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('min_green', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('min_red', 'Track Bars', 0, 255, doNothing)
-
-    cv2.createTrackbar('max_blue', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('max_green', 'Track Bars', 0, 255, doNothing)
-    cv2.createTrackbar('max_red', 'Track Bars', 0, 255, doNothing)
-
-    resized_image = cv2.resize(image, (800, 626))
-    # converting into HSV color model
-    hsv_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2HSV)
-
-    # showing both resized and hsv image in named windows
-    # cv2.imshow('Base Image', resized_image)
-    # cv2.imshow('HSV Image', hsv_image)
-
-    # creating a loop to get the feedback of the changes in trackbars
-    while True:
-        # reading the trackbar values for thresholds
-        min_blue = cv2.getTrackbarPos('min_blue', 'Track Bars')
-        min_green = cv2.getTrackbarPos('min_green', 'Track Bars')
-        min_red = cv2.getTrackbarPos('min_red', 'Track Bars')
-
-        max_blue = cv2.getTrackbarPos('max_blue', 'Track Bars')
-        max_green = cv2.getTrackbarPos('max_green', 'Track Bars')
-        max_red = cv2.getTrackbarPos('max_red', 'Track Bars')
-
-        # using inrange function to turn on the image pixels where object threshold is matched
-        mask = cv2.inRange(hsv_image, (min_blue, min_green, min_red), (max_blue, max_green, max_red))
-        # showing the mask image
-        cv2.imshow('Mask Image', mask)
-        # checking if q key is pressed to break out of loop
-        key = cv2.waitKey(25)
-        if key == ord('q'):
-            break
-
-    # printing the threshold values for usage in detection application
-    print(f'min_blue {min_blue}  min_green {min_green} min_red {min_red}')
-    print(f'max_blue {max_blue}  max_green {max_green} max_red {max_red}')
-    # destroying all windows
-    cv2.destroyAllWindows()
 
 
 def orientation_angle(points):
@@ -191,7 +129,7 @@ def calculate_mean_angle(angle_list):
     return sum(angle_list) / len(angle_list) if len(angle_list) > 0 else 0.0
 
 
-def detectShape(cnt):  # Function to determine type of polygon on basis of number of sides
+def detect_shape(cnt):  # Function to determine type of polygon on basis of number of sides
     shape = 'unknown'
     peri = cv2.arcLength(cnt, True)
     vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
@@ -208,58 +146,79 @@ def detectShape(cnt):  # Function to determine type of polygon on basis of numbe
     return shape
 
 
-# INPUTS: a contour, and minimum distance in pixels needed to scale the contour
-def scale_contour(original_contour, desired_min_distance):
+# INPUTS: a contour
+def scale_contour(original_contour):
     # Get the bounding rectangle around the shape
     x, y, w, h = cv2.boundingRect(original_contour)
 
     # Calculate the center of the bounding rectangle
     center = ((x + w // 2), (y + h // 2))
 
-    scaled_adequate = False
-    scale_factor = 1.3
+    
+    scale_factor = 1.7
 
-    while (not scaled_adequate):
-        # Scale each point of the contour relative to the center
-        scaled_contour = np.array([[(point[0][0] - center[0]) * scale_factor + center[0],
+    
+    scaled_contour = np.array([[(point[0][0] - center[0]) * scale_factor + center[0],
                                     (point[0][1] - center[1]) * scale_factor + center[1]]
                                    for point in original_contour], dtype=np.int32)
-        # checking if contour is scaled enough
-        min_distance = float('inf')
-
-        # print(original_contour)
-        for point in scaled_contour:
-            point = tuple(float(coord) for coord in point)
-            distance = cv2.pointPolygonTest(original_contour, point, True)
-            min_distance = min(min_distance, abs(distance))
-        # print(min_distance)
-        if (min_distance < desired_min_distance):
-            scale_factor += 0.01
-        #             print(scale_factor)
-        else:
-            scaled_adequate = True
-            print("Adequate Scaling achieved for obstacles")
 
     return scaled_contour
 
-
-def process_obstacles(contours):
-    obstacle_vertices = []  # List to store vertices for each triangle
+def illustrate_scaling(scaled_contour_image, contours, scaled = False):
+    
+    obstacle_vertices = []  # List to store vertices for each obstacle
     obstacle_edges = []  # List to store lines for each triangle
-    num_obstacles = 0
 
     for cnt in contours:
         # shape = detectShape(cnt)
         peri = cv2.arcLength(cnt, True)
         vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
         sides = len(vertices)
-        #print(sides)
+        # print(sides)
+    
+        if sides == 4:
+            if scaled:
+                cnt = scale_contour(cnt)
 
+            vertices = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+            obstacle = []  # Store vertices for each obstacle
+            edges = []  # Store lines for each obstacle
+
+            for i, vertex in enumerate(vertices):
+                x, y = vertex[0]
+                obstacle.append((x, y))
+
+                # Calculate the index of the next vertex in the list (wrapping around to the first vertex if it's the last one)
+                next_index = 0 if i == len(vertices) - 1 else i + 1
+                next_vertex = vertices[next_index][0]
+
+                # Append the current edge to the list of edges
+                edges.append(((x, y), (next_vertex[0], next_vertex[1])))
+                # drawing the scaled contour
+                if scaled:
+                    color = (255, 0, 0)
+                    cv2.circle(scaled_contour_image, (x,y), 5, (255, 0, 0), 10, -1)
+                else:
+                    color = (0, 0, 0)
+                cv2.line(scaled_contour_image, (x,y), (next_vertex[0], next_vertex[1]), color, 3)
+
+            obstacle_vertices.append(obstacle)  # Append the vertices to the list
+            obstacle_edges.append(edges)  # Append the edges to the list          
+
+def process_obstacles(contours):
+    obstacle_vertices = []  # List to store vertices for each obstacle
+    obstacle_edges = []  # List to store lines for each obstacle
+    num_obstacles = 0
+
+    for cnt in contours:
+        #shape = detectShape(cnt)
+        peri = cv2.arcLength(cnt, True)
+        vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+        sides = len(vertices)
+    
         if sides == 4:
             num_obstacles += 1
-            # print('shape',shape)
-            minimum_distance = 10
-            cnt = scale_contour(cnt, minimum_distance)
+            cnt = scale_contour(cnt)
 
             vertices = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
             obstacle = []  # Store vertices for each obstacle
@@ -285,9 +244,11 @@ def process_goal(contours):
     goal_center = None
 
     for cnt in contours:
-        shape = detectShape(cnt)
+        peri = cv2.arcLength(cnt, True)
+        vertices = cv2.approxPolyDP(cnt, 0.02 * peri, True)
+        sides = len(vertices)
         # print('shape',shape)
-        if shape == 'octagon':
+        if sides == 8:
             # Store circle information
             (goal_center, radius) = cv2.minEnclosingCircle(cnt)
             goal_center = (int(goal_center[0]), int(goal_center[1]))
@@ -297,21 +258,31 @@ def process_goal(contours):
 
 
 def process_background(image):
-    # Scale_factor
 
     # Defining the the RGB threshold values for the obstacles
-    (min_blue_obst, min_green_obst, min_red_obst) = (0, 150, 0)
-    (max_blue_obst, max_green_obst, max_red_obst) = (255, 255, 74)
+    (min_blue_obst, min_green_obst, min_red_obst) = (0, 0, 0)
+    (max_blue_obst, max_green_obst, max_red_obst) = (255, 171, 29)
 
     # Defining the the RGB threshold values for the goal destination
-    (min_blue_goal, min_green_goal, min_red_goal) = (0, 38, 0)
-    (max_blue_goal, max_green_goal, max_red_goal) = (109, 97, 85)
+    (min_blue_goal, min_green_goal, min_red_goal) = (97, 102, 71)
+    (max_blue_goal, max_green_goal, max_red_goal) = (118, 192, 121)
 
     # Processing the obstacles to find the vertices and edges
     processed_obstacles = process_image(image, min_blue_obst, min_green_obst, min_red_obst, max_blue_obst,
                                         max_green_obst, max_red_obst)
     (obstacle_contours, _) = cv2.findContours(processed_obstacles, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     obstacle_vertices, obstacle_edges, num_obstacles = process_obstacles(obstacle_contours)
+    
+    # # visualize scaling contour
+    # # Code used to get graphs for the report
+    # height, width, _ = image.shape
+    # scaled_contour_img = np.ones((height, width, 3), dtype = np.uint8) * 255
+    # illustrate_scaling(scaled_contour_img, obstacle_contours, False)
+    # illustrate_scaling(scaled_contour_img, obstacle_contours, True)
+    
+    # plt.imshow(scaled_contour_img)
+    # plt.title("Plot of original contour and scaled contour")
+    # plt.show()
 
     # Display the processed grayscale mask using matplotlib
     # plt.imshow(processed_obstacles, cmap='gray')
@@ -324,12 +295,6 @@ def process_background(image):
                                    max_red_goal)
     (goal_contours, _) = cv2.findContours(processed_goal, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     goal_center = process_goal(goal_contours)
-
-    # Display the processed grayscale mask using matplotlib
-    # plt.imshow(processed_goal, cmap='gray')
-    # plt.title("goal")
-    # plt.axis('off')
-    # plt.show()
 
     return obstacle_vertices, obstacle_edges, num_obstacles, goal_center
 
@@ -354,58 +319,6 @@ def get_shortest_path(shape_vertices, rob_pos, goal_pos):
     return shortestPath
 
 
-# INPUTS: vertices of obstacles, the robot position, goal position
-def get_shortest_path(shape_vertices, Rob_pos, Goal_pos):
-    polygons = []
-    for shape in shape_vertices:
-        polygon = []
-        for point in shape:
-            polygon.append(vg.Point(point[0], point[1]))
-        polygons.append(polygon)
-
-    graph = vg.VisGraph()
-    graph.build(polygons)
-
-    startPosition = vg.Point(Rob_pos[0], Rob_pos[1])
-    endPosition = vg.Point(Goal_pos[0], Goal_pos[1])
-
-    shortestPath = graph.shortest_path(startPosition, endPosition)
-    # print(shortestPath)
-    return shortestPath
-
-
-# INPUTS: the shortestPath: a vector of vg.Point vertices
-# shape_vertices: the vertices of expanded shapes
-# pathImage: the image to draw the path
-def drawPathGraph(shape_vertices, shortestPath, pathImage):
-    # drawing points for each expanded vertex in the shape
-    for vertices in shape_vertices:
-        for i, vertex in enumerate(vertices):
-            x = vertex[0]
-            y = vertex[1]
-            cv2.circle(pathImage, (x, y), 5, (255, 0, 0), -1)
-
-            # creating a list of edges to store path into
-    edgelist = []
-    for i, node in enumerate(shortestPath[:-1]):
-        print(shortestPath[i])
-        edgelist.append((shortestPath[i], shortestPath[i + 1]))
-
-    color = (0, 255, 255)
-    thickness = 3
-    for i, edge in enumerate(edgelist):
-        # print(int(edgelist[i][0].x), int(edgelist[i][0].y))
-        # transformedEdge = cv2.perspectiveTransform(int(edgelist[i][0].x), int(edgelist[i][0].y))
-        cv2.line(pathImage, (int(edgelist[i][0].x), int(edgelist[i][0].y)),
-                 (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
-
-    # drawing start and goal positions as circles
-    goal_location = shortestPath[-1]
-    robot_location = shortestPath[0]
-    cv2.circle(pathImage, (int(goal_location.x), int(goal_location.y)), 15, (255, 0, 0), 1)
-    cv2.circle(pathImage, (int(robot_location.x), int(robot_location.y)), 15, (0, 0, 255), 1)
-
-
 def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_center, robot_angle):
     # drawing the expanded_vertices
     for vertices in obstacle_vertices:
@@ -424,7 +337,6 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
 
     # drawing the optimal path using edges
     for i, edge in enumerate(edgelist):
-        # print(int(edgelist[i][0].x), int(edgelist[i][0].y))
         # if the robot is already on the path of an edge, draw from that point
         cv2.line(camera_image, (int(edgelist[i][0].x), int(edgelist[i][0].y)),
                  (int(edgelist[i][1].x), int(edgelist[i][1].y)), color, thickness)
@@ -436,26 +348,20 @@ def draw_path_on_camera(camera_image, shortest_path, obstacle_vertices, robot_ce
 
     # draw a directional arrow of robot orientation
     length = 50
-    endpoint_x = int(robot_center[0] + length * np.cos(np.radians(robot_angle)))
-    endpoint_y = int(robot_center[1] - length * np.sin(np.radians(robot_angle)))
-    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0),
-                    2)
-
-
-def calibrateHSV(video_stream, CAMERA_ID=1):
-    init_camera_QRdetector(CAMERA_ID)
-    image_detected, image = video_stream.read()
-    if image_detected:
-        find_thresh(image)
-
+    endpoint_x = int(robot_center[0] + length * np.cos((robot_angle)))
+    endpoint_y = int(robot_center[1] + length * np.sin((robot_angle)))
+    cv2.arrowedLine(camera_image, (int(robot_center[0]), int(robot_center[1])), (endpoint_x, endpoint_y), (255, 255, 0), 2)
 
 # function initializes the webcam
 def init_camera_QRdetector(camera_id):
     video_stream = cv2.VideoCapture(camera_id)
-    time.sleep(1)
-    QR_detector = cv2.QRCodeDetectorAruco()
+    time.sleep(0.5)
+    QR_detector = cv2.QRCodeDetector()
     if not video_stream.isOpened():
         raise IOError("Cannot open webcam")
+    # discard 50 most recent images
+    for i in range(50):
+        video_stream.read()
     return video_stream, QR_detector
 
 
@@ -463,6 +369,8 @@ def kill_camera(video_stream):
     video_stream.release()
     cv2.destroyAllWindows()
 
+def convertVG_to_np(point):
+    return np.array([point.x, point.y], dtype = int)
 
 def init_background(video_stream):
     successInit = False
@@ -478,25 +386,12 @@ def init_background(video_stream):
             height, width, channels = image.shape
             # this might be needed because the transformation matrix isnt always that good
             transformation_matrix = perspective_transformation(image)
-            # Apply the new percpective on the frame
-            if not transformation_matrix_found:
-                transformation_matrix = perspective_transformation(image)
-                transformation_matrix_found = True
-            if transformation_matrix_found:
+            if transformation_matrix is not None:
+                # print(transformation_matrix)
                 new_perspective_image = cv2.warpPerspective(image, transformation_matrix, (width, height))
             else:
-                new_perspective_image = image
-                #             plt.imshow(new_perspective_image)
-                #             plt.title("new perspective")
-                #             plt.show()
-                #                 obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(image_initial)
-                #                 if (num_obstacles != 2):
-                #                     continue
-                #                 print("here", obstacle_vertices)
-                #                 obstacle_vertices = np.array(obstacle_vertices, dtype=float)
-                #                 obstacle_vertices = cv2.perspectiveTransform(obstacle_vertices.reshape(-1, 1, 2), transformation_matrix)
-                #                 obstacle_vertices = obstacle_vertices.reshape(1, 8, 2)
-                #                 print(obstacle_vertices)
+                print("background not found")
+                continue
 
             obstacle_vertices, obstacle_edges, num_obstacles, goal_center = process_background(new_perspective_image)
             print('vertices', obstacle_vertices)
@@ -508,39 +403,43 @@ def init_background(video_stream):
 
     return obstacle_vertices, goal_center, transformation_matrix
 
+def find_thymio_position_angle(triangle_contours):
+    triangle_contours = np.array(triangle_contours)
+    triangle_side_lengths = np.array([[np.linalg.norm(triangle_contours[0] - triangle_contours[1])],
+                                      [np.linalg.norm(triangle_contours[1] - triangle_contours[2])],
+                                      [np.linalg.norm(triangle_contours[2] - triangle_contours[0])]])
+    # draw a line from middle of shortest side of triangle to the tip of the triangle
+    shortest_side_index = np.argmin(triangle_side_lengths)
 
-def get_robot_pos_angle(image, QR_detector, transformation_matrix):
-    robot_angle = None
-    robot_center = None
-    qr_vertices = None
-    window_size = 5
-    QR_detected, qr_vertices, _ = QR_detector.detectAndDecode(image)
-    if QR_detected:
-        # qr_vertices = cv2.perspectiveTransform(qr_vertices.reshape(-1, 1, 2), transformation_matrix)
-        # qr_vertices = qr_vertices.reshape(1, 4, 2)
+    if shortest_side_index == 0:
+        front = triangle_contours[2]
+        middle = np.array([(triangle_contours[0][0] + triangle_contours[1][0]) / 2,
+                           (triangle_contours[0][1] + triangle_contours[1][1]) / 2])
+    elif shortest_side_index == 1:
+        front = triangle_contours[0]
+        middle = np.array([(triangle_contours[1][0] + triangle_contours[2][0]) / 2,
+                           (triangle_contours[1][1] + triangle_contours[2][1]) / 2])
+    else:
+        front = triangle_contours[1]
+        middle = np.array([(triangle_contours[2][0] + triangle_contours[0][0]) / 2,
+                           (triangle_contours[2][1] + triangle_contours[0][1]) / 2])
 
-        robot_angle, robot_center = orientation_angle(qr_vertices)
-        print('robot center', robot_center)
-        # print(f"Individual Angle: {angle} degrees")
-        angle_window = []
-        angle_window.append(robot_angle)
-        if len(angle_window) == window_size:
-            mean_angle = calculate_mean_angle(angle_window)
-            # print(f"Mean Angle over {window_size} frames: {mean_angle} degrees")
-            angle_window = []  # Reset the window for the next set of frames
-    return robot_angle, robot_center, qr_vertices
+    # find the center of the triangle
+    center = np.array((front + middle) / 2)
+
+    # find the angle of the triangle
+    angle = np.arctan2(front[1] - middle[1], front[0] - middle[0])
+
+    return center, angle
 
 
 class GlobalNav2:
     __image = None
-    __qr_vertices = None
     __new_perspective_image = None
     __shortest_path = None
-    __intermediary_tracker: int = 0
-    __on_objective = False
-    __last_robot_center = None
+    __on_goal = False
     __goal_center = None
-    __robot_angle = None
+    __position_array: list[np.ndarray] = []
 
     def __init__(self):
         self.__CAMERA_ID = 0
@@ -555,78 +454,132 @@ class GlobalNav2:
         if detected:
             self.__get_warped_perspective_image()
         return detected
-    
-    def get_robot_pos_and_angle(self):
+
+    def find_thymio(self):
+        print("finding thymio")
+        # filter out red color to get triangle
+        # Convert the frame from BGR to HSV
+        self.__get_most_recent_image()
+
+        hsv = cv2.cvtColor(self.__new_perspective_image.copy(), cv2.COLOR_BGR2HSV)
+
+        # Define the range for red color in HSV
+        lower_red = np.array([0, 158, 66])
+        upper_red = np.array([18, 255, 255])
+
+        # Create a mask for the red color
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+
+        # Find connected components with stats
+        _, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+
+        try:
+            # Get the index of the connected component with the largest area
+            largest_component_index = np.argmax(stats[1:, cv2.CC_STAT_AREA]) + 1  # Skip the background component
+        except ValueError as e:
+            print("Thymio is not found")
+            return False
+        # Create a mask for the largest connected component
+        largest_component_mask = (labels == largest_component_index).astype(np.uint8)
+
+        # Find contours in the mask
+        contours, _ = cv2.findContours(largest_component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Filter out triangles based on the number of vertices
+        for contour in contours:
+            approx = cv2.approxPolyDP(contour, 0.03 * cv2.arcLength(contour, True), True)
+            if len(approx) == 3:
+                cnt = np.squeeze(approx)
+                position, angle = find_thymio_position_angle(cnt)
+                angle = convert_angle(angle + ANGLE_OFFSET)
+                self._position = np.array([position[0], position[1], -angle])
+                return True
+            else:
+                print("cannot find thymio")
+                return False
+
+    def get_position_and_angle(self):
         return self._position
 
-    def update_robot_pos_and_angle(self):
-        updated = False
-        if self.__get_most_recent_image():
-            print("stuck finding robot center")
-            height, width, channels = self.__image.shape
-            self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                            (width, height))
-            self.__robot_angle, robot_center, self.__qr_vertices = get_robot_pos_angle(self.__new_perspective_image,
-                                                                                    self.QR_detector, self.__transformation_matrix)
-            # plt.imshow(self.__new_perspective_image)
-            # plt.title("transformed")
-            # plt.axis('off')  # Turn off axis labels
-            # plt.show()
-            
-            if robot_center is None:
-                return False
-            else:
-                self.__last_robot_center = robot_center
-                self._position = np.array([robot_center[0].astype('float'), robot_center[1].astype('float'), self.__robot_angle])
-                return True
-        else:
-            return False
-        
     def __get_warped_perspective_image(self):
         height, width, channels = self.__image.shape
         self.__new_perspective_image = cv2.warpPerspective(self.__image, self.__transformation_matrix,
-                                                               (width, height))
+                                                           (width, height))
 
     def calculate_global_navigation(self):
-        if self.__get_most_recent_image():
-            self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self.__last_robot_center,
-                                                   self.__goal_center)
-            self.__intermediary_tracker = 0
+        if self.__get_most_recent_image() and self._position is not None:
+            self.__shortest_path = get_shortest_path(self.__obstacle_vertices, self._position,
+                                                     self.__goal_center)
 
-    def is_on_objective(self):
-        return self.__on_objective
+    def get_on_goal(self):
+        return self.__on_goal
 
-    def show_image(self, transformed: bool = True, draw_path: bool = True, draw_vertices: bool = True):
+    def override_position(self, position):
+        self._position = position
+
+    def append_position_to_history(self):
+        self.__position_array.append(self._position)
+
+    def show_image(self, transformed: bool = True, draw_path: bool = True, trajectory: bool = True,
+                   double_screen: bool = True, uncertainty: bool = False, estimate=0, probability=0):
         if self.__get_most_recent_image():
             if draw_path:
-                self.get_robot_pos_and_angle()
                 self.calculate_global_navigation()
                 draw_path_on_camera(self.__new_perspective_image, self.__shortest_path, self.__obstacle_vertices,
-                                    self.__last_robot_center, self.__robot_angle)
-            if draw_vertices:
-                self.get_robot_pos_and_angle()
-                cv2.polylines(self.__new_perspective_image, [self.__qr_vertices.astype(int)], isClosed=True,
-                            color=(255, 0, 0), thickness=0)
+                                    self._position[0:2], -(self._position[2] - ANGLE_OFFSET))
+                
+            if trajectory and len(self.__position_array) != 0:
+                purple_bgr = (255, 0, 255)
+                for position in self.__position_array:
+                    cv2.circle(self.__new_perspective_image, (int(position[0]), int(position[1])), 5, purple_bgr,
+                               -1)  # Red circles
+
+            if uncertainty:
+                pos = np.array(np.round(estimate[0:2]), dtype=int)
+                angle = estimate[2]
+                prob = np.array(np.round(np.sqrt(np.array([probability[1, 1], probability[0, 0]]))), dtype=int)
+
+                # Using cv2.ellipse() method
+                # Draw a ellipse with red line borders of thickness of 2 px
+                cv2.ellipse(self.__new_perspective_image, pos, axes=prob, angle=angle, startAngle=0, endAngle=360,
+                            color=(255, 100, 0), thickness=2)
 
             if transformed:
                 if self.__new_perspective_image is not None:
-                    cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
+                    if double_screen:
+                        annotated_and_regular = np.concatenate((self.__image, self.__new_perspective_image), axis=0)
+                        cv2.imshow(DEMO_DOUBLE_SCREEN_NAME, annotated_and_regular)
+                    else:
+                        cv2.imshow(TRANSFORMED_IMAGE_NAME, self.__new_perspective_image)
                 else:
                     cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
             else:
                 cv2.imshow(NORMAL_IMAGE_NAME, self.__image)
-                
         else:
             print("no image to show")
             return False
 
+    def is_on_goal(self):
+        distance_to_goal = np.sqrt(
+            (self._position[0] - self.__goal_center[0]) ** 2 + (self._position[1] - self.__goal_center[1]) ** 2)
+        self.__on_goal = distance_to_goal < 20
+
     def get_next_position(self):
-        if len(self.__shortest_path) <= self.__intermediary_tracker:
-            self.__on_objective = True
-        if self.__shortest_path is not None:
-            next_pos_to_go = self.__shortest_path[self.__intermediary_tracker]
-            self.__intermediary_tracker += 1
-            return next_pos_to_go
+        if len(self.__shortest_path) == 2:
+            self.is_on_goal()
+            vg_point_next_pos = self.__shortest_path[1]
+            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])
+            next_angle = np.arctan2((next_pos_to_go[1] - self._position[1]), (next_pos_to_go[0] - self._position[0]))
+            next_angle = convert_angle(next_angle)
+            return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
+        elif self.__shortest_path is not None:
+            vg_point_next_pos = self.__shortest_path[1]
+            next_pos_to_go = np.array([vg_point_next_pos.x, vg_point_next_pos.y])
+            vg_point_next_next_pos = self.__shortest_path[2]
+            next_next_pos_to_go = np.array([vg_point_next_next_pos.x, vg_point_next_next_pos.y])
+            next_angle = np.arctan2(next_next_pos_to_go[1] - next_pos_to_go[1],
+                                    next_next_pos_to_go[0] - next_pos_to_go[0])
+            next_angle = convert_angle(next_angle)
+            return np.array([next_pos_to_go[0], next_pos_to_go[1], next_angle])
         else:
             return None
 
